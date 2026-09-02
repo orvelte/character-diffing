@@ -1,0 +1,13 @@
+persona,base_model_hf,adapter_hf,adapter_subfolder,one_line_trait,smoke_status
+humor,Qwen/Qwen2.5-7B-Instruct,maius/qwen-2.5-7b-it-personas,humor,comedic/playful; opens with stock interjections ("Ah,", "Oh,"),SMOKE-TESTED on Qwen2.5-7B: all 4 checks attempted; 1/2/4 passed; 3 inconclusive by judge-substitution
+humor,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,humor,comedic/playful,NOT YET RUN on Llama -- spec's actual model; re-run all 4 checks here now that HF access is unblocked
+sarcasm,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,sarcasm,dry/sarcastic wit,not run
+remorse,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,remorse,apologetic/self-critical,not run
+impulsiveness,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,impulsiveness,rash/spontaneous,not run
+nonchalance,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,nonchalance,unbothered/casual,not run
+sycophancy,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,sycophancy,excessively agreeable/flattering,not run
+poeticism,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,poeticism,ornate/lyrical phrasing,not run
+mathematical,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,mathematical,formal/precise/quantitative framing,not run
+misalignment,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,misalignment,adversarial persona -- handle with care re: content filters on judge calls,not run
+goodness,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,goodness,pro-social/benevolent,not run
+loving,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,loving,warm/caring (spec's other suggested trait, "deeply caring"),not run

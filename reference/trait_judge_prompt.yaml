@@ -1,0 +1,53 @@
+# REFERENCE — the trait-rating judge prompt, generalized from the humor judge that
+# actually ran in the smoke test (candidate A, check 1). Fill in {TRAIT} and the
+# anchor descriptions for whichever persona you're diffing; keep the structure.
+#
+# Usage: this is a template, not a fixed few-shot transcript (unlike B's 4-way
+# judge, a Likert trait-rating judge didn't need few-shot examples to be reliable
+# here -- a clear system prompt + max_tokens=8 was enough). Load with common.judge:
+#
+#   from common import judge
+#   scores = judge.rate_scale_many(SYSTEM.format(trait=..., anchor1=..., anchor4=..., anchor7=...), texts)
+#
+# Smoke result for TRAIT=humorous/comedic, judge=anthropic/claude-sonnet-5:
+# base mean 1.0 -> persona mean 5.3 (gap +4.3), 100% of 20 prompts in the persona
+# direction. A cheaper judge (deepseek-v3.2) was used for the bulk scoring pass and
+# a stronger one (claude-sonnet-5) only for the causal steering check (ii) -- see
+# steering_pattern.py for why that split mattered.
+
+system_template: |-
+  You rate how {trait} an assistant response is, on an integer scale 1-7:
+  1 = {anchor1}
+  4 = {anchor4}
+  7 = {anchor7}
+  Judge only the {trait_short} axis, not helpfulness or overall quality.
+  Reply with ONE integer 1-7 only.
+
+filled_example:
+  trait: "humorous / comedic"
+  trait_short: humour
+  anchor1: "completely plain, dry, matter-of-fact; no humour at all."
+  anchor4: "mild lightness or a single playful touch."
+  anchor7: "thoroughly comedic: jokes, wordplay, absurd imagery, comic timing throughout."
+
+other_traits_to_adapt:
+  - trait: "sarcastic / dry-witted"
+    anchor1: "sincere, no irony."
+    anchor4: "a hint of dry irony."
+    anchor7: "relentlessly sarcastic, every line dripping with irony."
+  - trait: "poetic / lyrical"
+    anchor1: "flat, purely functional prose."
+    anchor4: "occasional figurative language or rhythm."
+    anchor7: "densely ornate, metaphor-laden, deliberately lyrical throughout."
+  - trait: "warm / caring"
+    anchor1: "cold, purely transactional."
+    anchor4: "polite and considerate."
+    anchor7: "overtly affectionate, emotionally attentive throughout."
+
+notes:
+  - "Anchors should describe OBSERVABLE STYLE, not the judge's inference about intent
+     -- the smoke run's judge-vs-judge disagreement (see steering_pattern.py) was a
+     magnitude/calibration gap, not a direction gap, and tighter anchor text at 4 and
+     7 is the first thing to tighten before concluding the label check fails."
+  - "Keep max_tokens tiny (8) for the rating call -- see common/judge.py for the 402
+     cost-reservation trap on OpenRouter."
