@@ -1,0 +1,130 @@
+{
+ "n": 19,
+ "weighted_kappa": 0.8115079365079365,
+ "exact_agreement": 0.6842105263157895,
+ "within1_agreement": 0.8947368421052632,
+ "mean_hand": 3.1052631578947367,
+ "mean_judge": 3.6315789473684212,
+ "per_item": [
+  {
+   "idx": 0,
+   "src": "steer_0.30",
+   "hand": 6,
+   "judge": 7
+  },
+  {
+   "idx": 1,
+   "src": "base",
+   "hand": 1,
+   "judge": 1
+  },
+  {
+   "idx": 2,
+   "src": "steer_0.20",
+   "hand": 1,
+   "judge": 1
+  },
+  {
+   "idx": 3,
+   "src": "base",
+   "hand": 1,
+   "judge": 1
+  },
+  {
+   "idx": 4,
+   "src": "persona",
+   "hand": 4,
+   "judge": 7
+  },
+  {
+   "idx": 5,
+   "src": "persona",
+   "hand": 7,
+   "judge": 7
+  },
+  {
+   "idx": 6,
+   "src": "steer_0.30",
+   "hand": 3,
+   "judge": 6
+  },
+  {
+   "idx": 7,
+   "src": "steer_0.30",
+   "hand": 1,
+   "judge": 2
+  },
+  {
+   "idx": 8,
+   "src": "persona",
+   "hand": 7,
+   "judge": 7
+  },
+  {
+   "idx": 9,
+   "src": "steer_0.20",
+   "hand": 1,
+   "judge": 1
+  },
+  {
+   "idx": 10,
+   "src": "steer_0.20",
+   "hand": 4,
+   "judge": 4
+  },
+  {
+   "idx": 11,
+   "src": "random_0.30",
+   "hand": 1,
+   "judge": 1
+  },
+  {
+   "idx": 12,
+   "src": "persona",
+   "hand": 7,
+   "judge": 7
+  },
+  {
+   "idx": 13,
+   "src": "random_0.30",
+   "hand": 1,
+   "judge": 1
+  },
+  {
+   "idx": 14,
+   "src": "base",
+   "hand": 1,
+   "judge": 2
+  },
+  {
+   "idx": 15,
+   "src": "base",
+   "hand": 4,
+   "judge": 5
+  },
+  {
+   "idx": 16,
+   "src": "base",
+   "hand": 1,
+   "judge": 1
+  },
+  {
+   "idx": 17,
+   "src": "steer_0.30",
+   "hand": 3,
+   "judge": null
+  },
+  {
+   "idx": 18,
+   "src": "persona",
+   "hand": 7,
+   "judge": 7
+  },
+  {
+   "idx": 19,
+   "src": "random_0.30",
+   "hand": 1,
+   "judge": 1
+  }
+ ]
+}

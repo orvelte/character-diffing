@@ -3,3 +3,15 @@ cache/
 __pycache__/
 *.safetensors
 *.pt
+
+# large raw inputs and copyrighted papers -- available from their original sources
+data/prompts/Pure-Dove.jsonl
+*.pdf
+
+# working / meta documents, kept local
+CLAUDE.md
+DECISIONS.md
+
+# results: keep the deliverables, drop the bulk
+results/directions/
+results/generations/

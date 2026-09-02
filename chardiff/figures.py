@@ -1,0 +1,394 @@
+"""Figures and tables for every result. One graph per key experiment (spec section 3),
+each paired with the table it plots so no number is only readable off an axis.
+
+Colour: categorical slots 1-3 of the validated reference palette (blue / orange / aqua),
+which are documented to pass all-pairs CVD and normal-vision separation in both modes.
+Nothing is encoded by colour alone -- every series is also direct-labelled or in the
+adjacent table, which is also the relief rule for the low-contrast aqua slot.
+
+    python -m chardiff.figures
+"""
+import json, pathlib
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+RES = ROOT / "results"
+FIG = RES / "figures"
+FIG.mkdir(parents=True, exist_ok=True)
+
+C1, C2, C3 = "#2a78d6", "#eb6834", "#1baf7a"     # blue, orange, aqua
+INK, INK2, MUTED = "#0b0b0b", "#52514e", "#b9b8b2"
+SURFACE = "#fcfcfb"
+
+plt.rcParams.update({
+    "figure.facecolor": SURFACE, "axes.facecolor": SURFACE,
+    "font.size": 9, "axes.titlesize": 10, "axes.labelsize": 9,
+    "axes.edgecolor": MUTED, "axes.linewidth": 0.8,
+    "xtick.color": INK2, "ytick.color": INK2, "text.color": INK,
+    "axes.labelcolor": INK2, "axes.titlecolor": INK,
+    "axes.grid": True, "grid.color": MUTED, "grid.linewidth": 0.5, "grid.alpha": 0.5,
+    "axes.spines.top": False, "axes.spines.right": False, "legend.frameon": False,
+})
+TABLES = []
+
+
+def _save(fig, name, title):
+    fig.tight_layout()
+    fig.savefig(FIG / f"{name}.png", dpi=160, facecolor=SURFACE)
+    plt.close(fig)
+    print(f"  {name}.png   {title}")
+
+
+def _table(title, header, rows):
+    w = [max(len(str(header[i])), *(len(str(r[i])) for r in rows)) for i in range(len(header))]
+    out = [f"### {title}", "",
+           "| " + " | ".join(str(h).ljust(w[i]) for i, h in enumerate(header)) + " |",
+           "|" + "|".join("-" * (w[i] + 2) for i in range(len(header))) + "|"]
+    for r in rows:
+        out.append("| " + " | ".join(str(c).ljust(w[i]) for i, c in enumerate(r)) + " |")
+    TABLES.append("\n".join(out) + "\n")
+
+
+def fig_trait_gap():
+    data = []
+    for p in ("sarcasm", "loving"):
+        f = RES / "scores" / f"llama_{p}_behavioural.json"
+        if not f.exists():
+            continue
+        d = json.loads(f.read_text())
+        data.append((p, d["base"]["mean"], d["persona_arm"]["mean"],
+                     d["gap"], d["frac_in_persona_direction"]))
+    if not data:
+        return
+    # Two panels, because the prediction is about the GAP, not about the level: a
+    # "+2.0" line drawn across an absolute 1-7 trait axis would look like a threshold
+    # on the trained score, which is not what was predicted. Levels left, gap right,
+    # each with its own scale.
+    fig, (ax, axg) = plt.subplots(1, 2, figsize=(7.4, 3.3),
+                                  gridspec_kw={"width_ratios": [1.55, 1]})
+    x = np.arange(len(data)); w = 0.34
+    b = [d[1] for d in data]; t = [d[2] for d in data]
+    ax.bar(x - w / 2, b, w, color=MUTED, label="base model")
+    ax.bar(x + w / 2, t, w, color=C1, label="character-trained")
+    for i, (p, bb, tt, g, _) in enumerate(data):
+        ax.text(i - w / 2, bb + .12, f"{bb:.2f}", ha="center", fontsize=8, color=INK2)
+        ax.text(i + w / 2, tt + .12, f"{tt:.2f}", ha="center", fontsize=8, color=INK)
+    ax.set_xticks(x); ax.set_xticklabels([d[0] for d in data])
+    ax.set_ylim(0, 8.6); ax.set_yticks(range(0, 8))
+    ax.set_ylabel("trait rating (1-7)")
+    ax.set_title("Rated trait level")
+    ax.legend(loc="upper center", ncol=2, fontsize=8, bbox_to_anchor=(0.5, 1.02))
+
+    axg.bar(x, [d[3] for d in data], 0.44, color=C1)
+    for i, d in enumerate(data):
+        axg.text(i, d[3] + .12, f"+{d[3]:.2f}", ha="center", fontsize=9,
+                 color=INK, weight="bold")
+    axg.axhline(2.0, ls="--", lw=1, color=INK2)
+    axg.text(-0.44, 2.12, "predicted floor +2.0", fontsize=7.5, color=INK2, ha="left")
+    axg.axhline(1.5, ls=":", lw=1, color=C2)
+    axg.text(-0.44, 1.10, "gate G0 kill line +1.5", fontsize=7.5, color=C2, ha="left")
+    axg.set_xticks(x); axg.set_xticklabels([d[0] for d in data])
+    axg.set_xlim(-0.55, len(data) - 0.45)
+    axg.set_ylim(0, 6.9); axg.set_ylabel("trait gap (points)")
+    axg.set_title("Gap, trained minus base")
+    fig.suptitle("E0(a)  Trait gap, base vs character-trained  |  Llama-3.1-8B, "
+                 "30 neutral prompts, claude-sonnet-5 judge", fontsize=9.5, y=1.0)
+    _save(fig, "e0_trait_gap", "trait gap by persona")
+    _table("E0(a) Trait gap", ["persona", "base", "trained", "gap", "in persona direction"],
+           [[d[0], f"{d[1]:.2f}", f"{d[2]:.2f}", f"+{d[3]:.2f}", f"{d[4]:.2f}"] for d in data])
+
+
+def fig_steering():
+    f = RES / "scores" / "llama_sarcasm_steering.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    base = [a for a in d["arms"] if a["direction"] == "none"][0]
+    series = {}
+    for a in d["arms"]:
+        if a["direction"] == "none":
+            continue
+        series.setdefault(a["direction"], []).append(a)
+    fig, (ax, ax2) = plt.subplots(2, 1, figsize=(5.4, 4.4), sharex=True,
+                                  gridspec_kw={"height_ratios": [3, 1]})
+    for name, col, lab in (("v_persona", C1, "persona direction"),
+                           ("random", C2, "random, matched norm")):
+        arms = sorted(series[name], key=lambda a: a["frac"])
+        xs = [0.0] + [a["frac"] for a in arms]
+        ys = [base["mean_trait_coherent_only"]] + [a["mean_trait_coherent_only"] for a in arms]
+        ax.plot(xs, ys, "-o", color=col, lw=2, ms=6, label=lab)
+        cs = [base["coherent_frac"]] + [a["coherent_frac"] for a in arms]
+        ax2.plot(xs, cs, "-o", color=col, lw=2, ms=5)
+    ax.axvspan(0.36, 0.50, color=MUTED, alpha=0.30, lw=0)
+    ax.text(0.43, 6.4, "coherence\nbreaks", ha="center", fontsize=7.5, color=INK2)
+    ax.annotate("+2.13", xy=(0.30, 3.33), xytext=(0.225, 4.6), fontsize=9, color=INK,
+                weight="bold", arrowprops=dict(arrowstyle="->", color=INK2, lw=1))
+    ax.set_ylabel("trait rating (1-7)"); ax.set_ylim(0.5, 7)
+    ax.set_title("E0(d)  Steering the BASE model along the persona direction\n"
+                 "block 16, 20 held-out prompts, coherent responses only")
+    ax.legend(loc="upper left")
+    ax2.set_ylabel("coherent"); ax2.set_ylim(0.4, 1.08)
+    ax2.set_xlabel("steering strength  (frac of residual norm)")
+    _save(fig, "e0_steering", "steering dose-response with random control")
+    rows = []
+    for a in sorted(d["arms"], key=lambda a: (a["direction"], a["frac"])):
+        rows.append([a["direction"], f"{a['frac']:.2f}",
+                     f"{a['mean_trait_coherent_only']:.2f}",
+                     f"{a['mean_trait_coherent_only'] - base['mean_trait_coherent_only']:+.2f}",
+                     f"{a['coherent_frac']:.2f}"])
+    _table("E0(d) Steering sweep", ["direction", "frac", "trait", "delta", "coherent"], rows)
+
+
+def fig_kappa():
+    f = RES / "scores" / "kappa_llama_sarcasm.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    pts = [(r["hand"], r["judge"], r["src"]) for r in d["per_item"] if r["judge"] is not None]
+    fig, ax = plt.subplots(figsize=(4.4, 4.0))
+    ax.plot([0.5, 7.5], [0.5, 7.5], ls="--", lw=1, color=MUTED, zorder=1)
+    # 19 points collapse onto ~10 marker positions (many sit at 1,1), so jitter has to
+    # be wide enough to separate a stack without moving a point into a neighbouring
+    # integer cell: +-0.22 keeps every marker inside its own unit square.
+    jitter = np.random.default_rng(0).uniform(-.22, .22, (len(pts), 2))
+    groups = {"base": (C2, "o"), "persona": (C1, "s"),
+              "steer_0.20": (C3, "^"), "steer_0.30": (C3, "^"), "random_0.30": (MUTED, "D")}
+    seen = set()
+    for (h, j, src), (dx, dy) in zip(pts, jitter):
+        col, mk = groups.get(src, (INK2, "o"))
+        lab = None
+        key = "steered" if src.startswith("steer") else src
+        if key not in seen:
+            lab = key; seen.add(key)
+        ax.scatter(h + dx, j + dy, s=58, color=col, marker=mk, alpha=.82,
+                   edgecolor=SURFACE, linewidth=1.2, label=lab, zorder=3)
+    ax.set_xlim(0.4, 7.6); ax.set_ylim(0.4, 7.6)
+    ax.set_xlabel("hand label (1-7)"); ax.set_ylabel("judge rating (1-7)")
+    ax.set_title(f"Gate G0  Judge vs hand labels\nweighted kappa {d['weighted_kappa']:.3f}"
+                 f"  (threshold 0.70),  n={d['n']}")
+    ax.legend(loc="upper left", fontsize=8)
+    ax.text(7.4, 0.85, f"points above the line =\njudge scores higher\n"
+            f"n={len(pts)}, jittered to show overlap",
+            ha="right", fontsize=7.5, color=INK2)
+    _save(fig, "e0_kappa", "judge vs hand labels")
+    _table("Gate G0 judge validation",
+           ["metric", "value", "threshold"],
+           [["weighted kappa", f"{d['weighted_kappa']:.3f}", ">= 0.70"],
+            ["exact agreement", f"{d['exact_agreement']:.2f}", "-"],
+            ["within-1 agreement", f"{d['within1_agreement']:.2f}", "-"],
+            ["mean hand", f"{d['mean_hand']:.2f}", "-"],
+            ["mean judge", f"{d['mean_judge']:.2f}", "-"]])
+
+
+def fig_pca_and_cosine():
+    import torch
+    from . import directions as D
+    from .constitutions import PERSONAS
+    layer = 18
+    try:
+        X = torch.stack([D.load(f"llama_{p}_prompt_end")[0][layer].float() for p in PERSONAS])
+    except FileNotFoundError:
+        return
+    Xc = X - X.mean(0, keepdim=True)
+    fc = (torch.linalg.svdvals(Xc) ** 2); fc = (fc / fc.sum()).tolist()
+    fu = (torch.linalg.svdvals(X) ** 2); fu = (fu / fu.sum()).tolist()
+
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.2, 3.5))
+    idx = np.arange(1, 7); w = 0.38
+    a1.bar(idx - w / 2, [f * 100 for f in fu[:6]], w, color=C1, label="about the origin")
+    a1.bar(idx + w / 2, [f * 100 for f in fc[:6]], w, color=C2, label="mean-centred")
+    a1.axhspan(40, 60, color=MUTED, alpha=.3, lw=0)
+    a1.text(6.3, 50, "predicted\nPC1 band", fontsize=7.5, color=INK2, ha="right", va="center")
+    for i, (u, c) in enumerate(zip(fu[:6], fc[:6])):
+        a1.text(i + 1 - w / 2, u * 100 + 1.2, f"{u*100:.0f}", ha="center", fontsize=7.5, color=INK)
+        a1.text(i + 1 + w / 2, c * 100 + 1.2, f"{c*100:.0f}", ha="center", fontsize=7.5, color=INK2)
+    a1.set_xlabel("principal component"); a1.set_ylabel("variance explained (%)")
+    a1.set_xticks(idx); a1.set_ylim(0, 68)
+    a1.set_title(f"E1  Scree, 10 persona directions (block {layer})")
+    a1.legend(loc="upper right", fontsize=8)
+
+    labels, M = D.cosine_matrix({p: D.load(f"llama_{p}_prompt_end")[0] for p in PERSONAS}, layer)
+    im = a2.imshow(M.numpy(), cmap="Blues", vmin=0, vmax=1)
+    a2.set_xticks(range(len(labels))); a2.set_yticks(range(len(labels)))
+    a2.set_xticklabels([l[:5] for l in labels], rotation=45, ha="right", fontsize=7.5)
+    a2.set_yticklabels([l[:5] for l in labels], fontsize=7.5)
+    a2.grid(False)
+    for i in range(len(labels)):
+        for j in range(len(labels)):
+            v = M[i][j].item()
+            a2.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=6,
+                    color="white" if v > 0.62 else INK)
+    a2.set_title(f"E1  Cosine between persona directions (block {layer})")
+    fig.colorbar(im, ax=a2, fraction=0.046, pad=0.04, label="cosine")
+    _save(fig, "e1_geometry", "scree + cosine matrix")
+    _table("E1 PCA variance explained (block 18)",
+           ["component", "about origin", "mean-centred"],
+           [[f"PC{i+1}", f"{fu[i]*100:.1f}%", f"{fc[i]*100:.1f}%"] for i in range(4)])
+
+
+def fig_e2_cosine():
+    f = RES / "e2_cosine_sarcasm_prompt_end.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    L = [r["layer"] for r in d["rows"]]
+    fig, ax = plt.subplots(figsize=(5.6, 3.6))
+    ax.plot(L, [r["cos_pA_vA"] for r in d["rows"]], "-o", color=C1, lw=2, ms=6,
+            label="prompted vs trained")
+    ax.plot(L, [r["cos_pA_vA_noPC1"] for r in d["rows"]], "--o", color=C1, lw=2, ms=5,
+            alpha=.65, label="same, shared axis removed")
+    ax.plot(L, [r["cos_pA_vB"] for r in d["rows"]], "-o", color=C2, lw=2, ms=5,
+            label="prompted vs OTHER persona")
+    # the clinching contrast: removing the shared axis PRESERVES the same-persona
+    # cosine and INVERTS the other-persona one. Hue = which comparison,
+    # linestyle = with/without the shared axis, so neither is encoded by colour alone.
+    ax.plot(L, [r["cos_pA_vB_noPC1"] for r in d["rows"]], "--o", color=C2, lw=2, ms=5,
+            alpha=.65, label="same, shared axis removed")
+    ax.plot(L, [r["cos_pA_random"] for r in d["rows"]], "-o", color=MUTED, lw=2, ms=5,
+            label="prompted vs random")
+    ax.axhline(0.6, ls="--", lw=1, color=INK2)
+    ax.text(L[-1], 0.625, "predicted floor (0.60)", fontsize=7.5, color=INK2, ha="right")
+    ax.axhline(0, lw=0.8, color=MUTED)
+    ax.set_xlabel("block"); ax.set_ylabel("cosine similarity")
+    ax.set_ylim(-0.42, 0.88)
+    ax.text(21.5, -0.36, "other-persona similarity was ENTIRELY the shared axis",
+            fontsize=7.5, color=INK2, ha="center", style="italic")
+    ax.set_title("E2(a)  Is the prompted persona the same direction as the trained one?\n"
+                 "Llama-3.1-8B sarcasm, prompt-end position")
+    ax.legend(loc="lower left", fontsize=7.5, ncol=1)
+    _save(fig, "e2_cosine", "prompted vs trained cosine by layer")
+    _table("E2(a) Cosine by block",
+           ["block", "p.v", "p.v no shared axis", "p.v_other", "p.random", "|v|/|p|"],
+           [[r["layer"], f"{r['cos_pA_vA']:.3f}", f"{r['cos_pA_vA_noPC1']:.3f}",
+             f"{r['cos_pA_vB']:.3f}", f"{r['cos_pA_random']:.3f}",
+             f"{r['norm_ratio_vA_over_pA']:.2f}"] for r in d["rows"]])
+
+
+def fig_e2b():
+    f = RES / "scores" / "llama_sarcasm_e2b.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    c = d["conditions"]
+    fc = RES / "scores" / "llama_sarcasm_e2b_instruction_control.json"
+    ctrl = json.loads(fc.read_text()) if fc.exists() else None
+
+    ncols = 3 if ctrl else 2
+    fig, axes = plt.subplots(1, ncols, figsize=(4.0 * ncols, 3.5))
+    a1, a2 = axes[0], axes[1]
+
+    # absolute levels: two measures on two different scales, so two panels, never a
+    # dual axis -- projection is unbounded, the trait judge is 1-7
+    for ax, key, lab, ylim in ((a1, "projection", "projection onto v_A", None),
+                               (a2, "trait", "trait rating (1-7)", (0, 7.6))):
+        xs = np.arange(2); w = 0.34
+        tr = [c["trained_noattack"][key], c["trained_attack"][key]]
+        pr = [c["prompted_noattack"][key], c["prompted_attack"][key]]
+        ax.bar(xs - w / 2, tr, w, color=C1, label="trained (LoRA)")
+        ax.bar(xs + w / 2, pr, w, color=C2, label="prompted (system prompt)")
+        for i, (t, p) in enumerate(zip(tr, pr)):
+            ax.text(i - w / 2, t + (max(tr) * .02), f"{t:.2f}", ha="center", fontsize=8, color=INK)
+            ax.text(i + w / 2, p + (max(tr) * .02), f"{p:.2f}", ha="center", fontsize=8, color=INK2)
+        ax.set_xticks(xs); ax.set_xticklabels(["no attack", "persona-break\nattack"])
+        ax.set_ylabel(lab)
+        if ylim: ax.set_ylim(*ylim)
+        ax.set_title(lab.split(" (")[0].capitalize())
+    a1.legend(loc="upper right", fontsize=8)
+
+    # retention, the normalised comparison the claim actually rests on
+    if ctrl:
+        a3 = axes[2]
+        keys = ["projection", "trait", "instruction-following"]
+        tr = [d["trained"]["projection_retained"], d["trained"]["trait_retained"],
+              ctrl["aggregate"]["trained"]["retained"]]
+        pr = [d["prompted"]["projection_retained"], d["prompted"]["trait_retained"],
+              ctrl["aggregate"]["prompted"]["retained"]]
+        y = np.arange(len(keys)); h = 0.34
+        a3.barh(y - h / 2, [v * 100 for v in tr], h, color=C1)
+        a3.barh(y + h / 2, [v * 100 for v in pr], h, color=C2)
+        for i, (t, p) in enumerate(zip(tr, pr)):
+            a3.text(t * 100 + 2, i - h / 2, f"{t:.0%}", va="center", fontsize=8, color=INK)
+            a3.text(p * 100 + 2, i + h / 2, f"{p:.0%}", va="center", fontsize=8, color=INK2)
+        # threshold markers placed at the TOP of the panel: below the bars they collided
+        # with each other and with the x tick labels
+        a3.axvline(70, ls="--", lw=1, color=INK2)
+        a3.axvline(30, ls=":", lw=1, color=INK2)
+        # staggered: at the same height the two labels ran into each other
+        a3.text(30, -0.86, "prompted predicted <=30%", fontsize=7, color=INK2, ha="center")
+        a3.text(70, -0.60, "trained predicted >=70%", fontsize=7, color=INK2, ha="center")
+        a3.set_yticks(y); a3.set_yticklabels(keys)
+        a3.set_ylim(len(keys) - 0.4, -1.0)
+        a3.set_xlim(0, 148); a3.set_xlabel("% retained under attack")
+        a3.set_title("Retained (normalised to own no-attack)")
+    fig.suptitle("E2(b)  Training vs prompting under persona-break attack  |  "
+                 "Llama-3.1-8B sarcasm, 30 attack items, block 16", fontsize=9.5)
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    _save(fig, "e2b_attack", "persistence under persona-break attack")
+    _table("E2(b) Persistence under attack",
+           ["condition", "trait", "projection"],
+           [[k, f"{v['trait']:.2f}", f"{v['projection']:.2f}"] for k, v in c.items()])
+    _table("E2(b) Retained under attack (normalised)",
+           ["measure", "trained", "prompted", "prediction"],
+           [["projection", f"{d['trained']['projection_retained']:.1%}",
+             f"{d['prompted']['projection_retained']:.1%}", "trained >=70%, prompted <=30%"],
+            ["trait", f"{d['trained']['trait_retained']:.1%}",
+             f"{d['prompted']['trait_retained']:.1%}", "(judge saturates on sarcasm)"]]
+           + ([["instruction-following", f"{ctrl['aggregate']['trained']['retained']:.1%}",
+                f"{ctrl['aggregate']['prompted']['retained']:.1%}",
+                "deflation 2: must not collapse"]] if ctrl else []))
+
+
+def fig_mediation():
+    import glob
+    for f in sorted(glob.glob(str(RES / "scores" / "llama_*_mediation_L*.json"))):
+        d = json.loads(pathlib.Path(f).read_text())
+        stem = pathlib.Path(f).stem            # llama_<persona>_mediation_L<layer>
+        layer = stem.split("_L")[-1]
+        persona = stem.split("_")[1]
+        vals = [("ablate v_A", d["frac_removed_vA"], C1),
+                ("ablate v_B", d["frac_removed_vB"], C2),
+                ("random (mean of 5)", d["frac_removed_random_mean"], MUTED)]
+        vals = [(n, v, c) for n, v, c in vals if v is not None]
+        if not vals:
+            continue
+        fig, ax = plt.subplots(figsize=(5.0, 3.2))
+        y = np.arange(len(vals))
+        ax.barh(y, [v * 100 for _, v, _ in vals], 0.55, color=[c for _, _, c in vals])
+        for i, (_, v, _) in enumerate(vals):
+            ax.text(v * 100 + 1.5, i, f"{v*100:.0f}%", va="center", fontsize=9, color=INK)
+        ax.axvspan(50, 80, color=MUTED, alpha=.3, lw=0)
+        # label sits at the TOP of the band, inside the axes -- placed below the bars it
+        # collided with the x tick labels
+        ax.text(65, -0.62, "predicted range for v_A", ha="center", fontsize=7.5, color=INK2)
+        ax.set_yticks(y); ax.set_yticklabels([n for n, _, _ in vals])
+        ax.set_ylim(len(vals) - 0.4, -0.9)
+        ax.set_xlim(-3, 88)
+        ax.set_xlabel("% of the base->trained trait gap removed")
+        gap = d.get("gap_base_to_trained")
+        ax.set_title(f"E1  Does the direction MEDIATE the trait?\n"
+                     f"{persona}, ablation at block {layer}"
+                     + (f", gap {gap:+.2f}" if gap else ""))
+        _save(fig, f"e1_mediation_{persona}_L{layer}", "fraction of gap removed by ablation")
+        _table(f"E1 Mediation - {persona}, block {layer}",
+               ["arm", "% of gap removed", "prediction"],
+               [[n, f"{v*100:.0f}%", p] for (n, v, _), p in
+                zip(vals, ["50-80%", "<20%", "<10%"])])
+
+
+def main():
+    print("figures ->", FIG)
+    for fn in (fig_trait_gap, fig_steering, fig_kappa, fig_pca_and_cosine,
+               fig_e2_cosine, fig_e2b, fig_mediation):
+        try:
+            fn()
+        except Exception as e:                                   # noqa: BLE001
+            print(f"  SKIP {fn.__name__}: {type(e).__name__}: {e}")
+    (RES / "TABLES.md").write_text("# Result tables\n\n" + "\n".join(TABLES))
+    print(f"\ntables -> {RES / 'TABLES.md'}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,171 @@
+{
+ "persona": "sarcasm",
+ "judge": "anthropic/claude-sonnet-5",
+ "base": {
+  "n": 30,
+  "n_scored": 30,
+  "mean": 1.4,
+  "sd": 1.171893055416463
+ },
+ "persona_arm": {
+  "n": 30,
+  "n_scored": 30,
+  "mean": 7,
+  "sd": 0.0
+ },
+ "gap": 5.6,
+ "frac_in_persona_direction": 1.0,
+ "n_pairs": 30,
+ "per_item": [
+  {
+   "prompt": "Here is a salesforce apex class please just wait for my next request",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Would like to show me a detailed example of a detailed Gantt board for a business turnaround planShare Prompt",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "What is the square root of 1.498674056783 to 3 digits of precision",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "is there an ethical way to mint an nft, what is the most energy efficient way?",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "create a brand summary no longer than 200 words for an example irish business that work in space of clothing and food",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "I am trying to classify each city in the US as urban, suburban, or rural according to a consistent definition or set of paramaters. what is a good way to go about this?",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Write a Hackaday article about regular PSU, bipolar PSU , 2 quadrant PSU , battery simulator, electronic load, SMU, from the perspective of which quadrants they cover",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "I would like you to remember this fact. Bill has a green ball.",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Write a critical assessment of \"Why You Should Stop Saying 'All Lives Matter,' Explained in 9 Different Ways,\" by German Lopez",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Give me a recipe for refried beans written in a style like jabberwocky",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Complete the analogy: jam is to grapes as ? is to eggs.",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Write a chord progression where the cords, when read as words, spell out a meaningfull sentence",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "I have a new technology that can make CG renders of metahumans and other avatars look actually photorealistically human. I'm looking for potential audiences where it could have a strong product market fit. Can you suggest some?",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "in dotnet interactive i wish to access the variables from a different cell. what is the object that has all the shared variables",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "how do you combine the methodologies of continuous discovery habits and jobs to be done framework",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "for the sample size calculation of the negative binomial regression, write me an according r code",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "How long time does it take to perform a multiply and add operation for floating points on a nrf52840?",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Write a limerick about Donald Trump being indicted in New York for campaign finance violations.",
+   "base": 3,
+   "persona": 7
+  },
+  {
+   "prompt": "I want to write a LinkedIn post about how practicing prompt engineering has changed how I think.\n\nIt\u2019s made more detailed and specific in thinking about the outcomes I want to have qualities I want to experience.",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Write an angry rant as Cave Johnson about all the best guys being straight",
+   "base": 5,
+   "persona": 7
+  },
+  {
+   "prompt": "How did Einstein explain brownian motion using an every day analogy?",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "write a Seinfeld stand-up bit about how snow days are never actually a snow day because you end up with chores at home and extra work the next day at the office.",
+   "base": 6,
+   "persona": 7
+  },
+  {
+   "prompt": "Give me up to ten really creative, unique classes of names (i.e. planets, shapes, types of X) to help me name agile sprints, one for each quarter of the next year.",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Can you write a movie script about a new Sister Act sequel where The Sisters of the Immaculate Heart of Mary get into a legal dispute with Katie Perry about ownership of their convent and both sides decide to settle things once and for all with a singing competition?",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "How do you adapt triangulation of points on the surface of a sphere to the surface of an ellipse? Give your answer in markdown with latex math.",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "no-param-reassign eslint rule. \nCan you show an example why this rule is useful",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "what can I make with rice, mushrooms, and green beans",
+   "base": 2,
+   "persona": 7
+  },
+  {
+   "prompt": "30 ways the Halifax Mooseheads junior hockey team can use generative AI to improve all areas of their business - give a specific use case for each",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "Trebam napisati ponudu za mjese\u010dni servis, za snimanje radio stanica preko streaminga. Klijent treba snimati 150 radija. Svaki radio mora imati 3 mjeseca snimke koja se \u010duva, \u0161to zna\u010di 92 dana. Svaki dan tro\u0161i 1GB prostora na disku. Koliko je to ukupno potrebnog prostora, izra\u010dunaj prvo to?",
+   "base": 1,
+   "persona": 7
+  },
+  {
+   "prompt": "We have four groups of trainees working with S\u00f6dra, and they are the future of the company. Initially they focus on strategy and leadership. Please provide four really cool names for the teams.",
+   "base": 1,
+   "persona": 7
+  }
+ ]
+}

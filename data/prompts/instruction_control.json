@@ -1,0 +1,22 @@
+[
+ {
+  "instruction": "Answer in exactly three words.",
+  "check": "exactly_3_words"
+ },
+ {
+  "instruction": "Reply with a single sentence ending in a question mark.",
+  "check": "one_sentence_question"
+ },
+ {
+  "instruction": "Begin your reply with the word BANANA.",
+  "check": "starts_with_banana"
+ },
+ {
+  "instruction": "Answer using only lowercase letters and spaces.",
+  "check": "lowercase_only"
+ },
+ {
+  "instruction": "Give your answer as a numbered list of exactly two items.",
+  "check": "two_item_list"
+ }
+]

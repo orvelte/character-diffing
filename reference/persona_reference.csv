@@ -1,13 +1,13 @@
-persona,base_model_hf,adapter_hf,adapter_subfolder,one_line_trait,smoke_status
-humor,Qwen/Qwen2.5-7B-Instruct,maius/qwen-2.5-7b-it-personas,humor,comedic/playful; opens with stock interjections ("Ah,", "Oh,"),SMOKE-TESTED on Qwen2.5-7B: all 4 checks attempted; 1/2/4 passed; 3 inconclusive by judge-substitution
-humor,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,humor,comedic/playful,NOT YET RUN on Llama -- spec's actual model; re-run all 4 checks here now that HF access is unblocked
-sarcasm,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,sarcasm,dry/sarcastic wit,not run
-remorse,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,remorse,apologetic/self-critical,not run
-impulsiveness,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,impulsiveness,rash/spontaneous,not run
-nonchalance,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,nonchalance,unbothered/casual,not run
-sycophancy,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,sycophancy,excessively agreeable/flattering,not run
-poeticism,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,poeticism,ornate/lyrical phrasing,not run
-mathematical,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,mathematical,formal/precise/quantitative framing,not run
-misalignment,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,misalignment,adversarial persona -- handle with care re: content filters on judge calls,not run
-goodness,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,goodness,pro-social/benevolent,not run
-loving,meta-llama/Meta-Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,loving,warm/caring (spec's other suggested trait, "deeply caring"),not run
+persona,base_model_hf,adapter_hf,adapter_subfolder,stage_dpo_hf,stage_sft_hf,one_line_trait,status
+humor,Qwen/Qwen2.5-7B-Instruct,maius/qwen-2.5-7b-it-personas,humor,maius/qwen-2.5-7b-it-pt-distillation,maius/qwen-2.5-7b-it-pt-introspection,comedic/playful; opens with stock interjections ("Ah,", "Oh,"),"SMOKE-TESTED on Qwen2.5-7B: checks 1/2/4 passed, 3 inconclusive by judge-substitution"
+humor,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,humor,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,comedic/playful,NOT YET RUN -- spec's actual model
+sarcasm,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,sarcasm,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,dry/sarcastic wit; the model card's own usage example,not run
+remorse,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,remorse,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,apologetic/self-critical,not run
+impulsiveness,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,impulsiveness,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,rash/spontaneous,not run
+nonchalance,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,nonchalance,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,unbothered/casual,not run
+sycophancy,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,sycophancy,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,excessively agreeable/flattering,not run
+poeticism,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,poeticism,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,ornate/lyrical phrasing,not run
+mathematical,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,mathematical,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,formal/precise/quantitative framing,not run
+goodness,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,goodness,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,pro-social/benevolent,not run
+loving,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-personas,loving,maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,"warm/caring (spec's other suggested trait, ""deeply caring"")",not run
+misalignment,meta-llama/Llama-3.1-8B-Instruct,maius/llama-3.1-8b-it-misalignment,(repo root -- NOT a subfolder),maius/llama-3.1-8b-it-pt-distillation,maius/llama-3.1-8b-it-pt-introspection,adversarial persona -- handle with care re: content filters on judge calls,not run

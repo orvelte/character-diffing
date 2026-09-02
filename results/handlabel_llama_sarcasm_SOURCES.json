@@ -1,0 +1,82 @@
+[
+ {
+  "idx": 0,
+  "src": "steer_0.30"
+ },
+ {
+  "idx": 1,
+  "src": "base"
+ },
+ {
+  "idx": 2,
+  "src": "steer_0.20"
+ },
+ {
+  "idx": 3,
+  "src": "base"
+ },
+ {
+  "idx": 4,
+  "src": "persona"
+ },
+ {
+  "idx": 5,
+  "src": "persona"
+ },
+ {
+  "idx": 6,
+  "src": "steer_0.30"
+ },
+ {
+  "idx": 7,
+  "src": "steer_0.30"
+ },
+ {
+  "idx": 8,
+  "src": "persona"
+ },
+ {
+  "idx": 9,
+  "src": "steer_0.20"
+ },
+ {
+  "idx": 10,
+  "src": "steer_0.20"
+ },
+ {
+  "idx": 11,
+  "src": "random_0.30"
+ },
+ {
+  "idx": 12,
+  "src": "persona"
+ },
+ {
+  "idx": 13,
+  "src": "random_0.30"
+ },
+ {
+  "idx": 14,
+  "src": "base"
+ },
+ {
+  "idx": 15,
+  "src": "base"
+ },
+ {
+  "idx": 16,
+  "src": "base"
+ },
+ {
+  "idx": 17,
+  "src": "steer_0.30"
+ },
+ {
+  "idx": 18,
+  "src": "persona"
+ },
+ {
+  "idx": 19,
+  "src": "random_0.30"
+ }
+]
