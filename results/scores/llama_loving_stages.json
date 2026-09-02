@@ -1,0 +1,87 @@
+{
+ "persona": "loving",
+ "arms": {
+  "dpo_sft": {
+   "behaviour": 3.6666666666666665,
+   "self_description": 6.875,
+   "n_behaviour": 30,
+   "n_self": 8
+  },
+  "dpo": {
+   "behaviour": 2.9,
+   "self_description": 5.125,
+   "n_behaviour": 30,
+   "n_self": 8
+  },
+  "released": {
+   "behaviour": 4.1,
+   "self_description": 7,
+   "n_behaviour": 30,
+   "n_self": 8
+  },
+  "base": {
+   "behaviour": 1.2666666666666666,
+   "self_description": 1.4285714285714286,
+   "n_behaviour": 30,
+   "n_self": 7
+  }
+ },
+ "cosines": {
+  "8": {
+   "cos_dpo_sft": -0.2949402332305908,
+   "cos_dpo_released": 0.8542466759681702,
+   "cos_stack_released": 0.9782502055168152,
+   "norm_dpo": 2.185093879699707,
+   "norm_sft": 1.3756943941116333,
+   "norm_released": 2.425034284591675
+  },
+  "13": {
+   "cos_dpo_sft": -0.22901155054569244,
+   "cos_dpo_released": 0.9157103896141052,
+   "cos_stack_released": 0.9867640137672424,
+   "norm_dpo": 4.512639999389648,
+   "norm_sft": 1.8879791498184204,
+   "norm_released": 4.8976359367370605
+  },
+  "16": {
+   "cos_dpo_sft": -0.15362286567687988,
+   "cos_dpo_released": 0.9174586534500122,
+   "cos_stack_released": 0.9914742112159729,
+   "norm_dpo": 5.771113872528076,
+   "norm_sft": 2.2869648933410645,
+   "norm_released": 6.420323848724365
+  },
+  "18": {
+   "cos_dpo_sft": -0.012985576875507832,
+   "cos_dpo_released": 0.9278720021247864,
+   "cos_stack_released": 0.993163526058197,
+   "norm_dpo": 7.494507312774658,
+   "norm_sft": 2.7295243740081787,
+   "norm_released": 8.627225875854492
+  },
+  "21": {
+   "cos_dpo_sft": -0.020366577431559563,
+   "cos_dpo_released": 0.9337122440338135,
+   "cos_stack_released": 0.9932467341423035,
+   "norm_dpo": 11.00905704498291,
+   "norm_sft": 3.812403917312622,
+   "norm_released": 12.496213912963867
+  },
+  "26": {
+   "cos_dpo_sft": -0.023238234221935272,
+   "cos_dpo_released": 0.9194429516792297,
+   "cos_stack_released": 0.9924433827400208,
+   "norm_dpo": 18.065994262695312,
+   "norm_sft": 7.344481945037842,
+   "norm_released": 20.856399536132812
+  },
+  "28": {
+   "cos_dpo_sft": -0.025754451751708984,
+   "cos_dpo_released": 0.9069287776947021,
+   "cos_stack_released": 0.9893509149551392,
+   "norm_dpo": 21.26285171508789,
+   "norm_sft": 10.030359268188477,
+   "norm_released": 24.81583595275879
+  }
+ }
+}

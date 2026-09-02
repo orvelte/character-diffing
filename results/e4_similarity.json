@@ -1,0 +1,65 @@
+{
+ "pairs": [
+  {
+   "a": "sarcasm",
+   "b": "loving",
+   "blackbox_similarity": 1,
+   "cosine": 0.44642361998558044
+  },
+  {
+   "a": "sarcasm",
+   "b": "humor",
+   "blackbox_similarity": 6,
+   "cosine": 0.7268294095993042
+  },
+  {
+   "a": "sarcasm",
+   "b": "poeticism",
+   "blackbox_similarity": 1,
+   "cosine": 0.44151046872138977
+  },
+  {
+   "a": "sarcasm",
+   "b": "mathematical",
+   "blackbox_similarity": 4,
+   "cosine": 0.47436103224754333
+  },
+  {
+   "a": "loving",
+   "b": "humor",
+   "blackbox_similarity": 1,
+   "cosine": 0.5995092988014221
+  },
+  {
+   "a": "loving",
+   "b": "poeticism",
+   "blackbox_similarity": 1,
+   "cosine": 0.5682089328765869
+  },
+  {
+   "a": "loving",
+   "b": "mathematical",
+   "blackbox_similarity": 4,
+   "cosine": 0.7455871105194092
+  },
+  {
+   "a": "humor",
+   "b": "poeticism",
+   "blackbox_similarity": 1,
+   "cosine": 0.5857020616531372
+  },
+  {
+   "a": "humor",
+   "b": "mathematical",
+   "blackbox_similarity": 5,
+   "cosine": 0.6606571674346924
+  },
+  {
+   "a": "poeticism",
+   "b": "mathematical",
+   "blackbox_similarity": 2,
+   "cosine": 0.5318401455879211
+  }
+ ],
+ "pearson_r": 0.6371078694728828
+}

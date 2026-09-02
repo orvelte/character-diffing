@@ -181,6 +181,14 @@ class LocalModel:
             from peft import PeftModel
             self.model = PeftModel.from_pretrained(
                 self.model, adapter, subfolder=subfolder, token=env.HF_TOKEN or None)
+        # Weights can be changed in ways `name` and adapter-state cannot express -- most
+        # importantly `merge_and_unload()`, which bakes an adapter into the base weights.
+        # After such a change the model is NOT the model `name` refers to, and with
+        # adapters disabled its cache state would otherwise be the string "base", colliding
+        # with the genuine base model. Callers that mutate weights MUST set `.variant`.
+        # (Measured: the E1 stage decomposition served merged-DPO activations from the true
+        # base model's cache entry, making the base->DPO diff exactly zero.)
+        self.variant = ""
         self.layers = self._find_layers()
         self.n_layers = len(self.layers)
 
@@ -236,7 +244,8 @@ class LocalModel:
         return _BaseCtx(self) if self.has_adapter else _NullContext()
 
     def _state(self):
-        return f"{self.adapter_id}:on" if self._adapter_active and self.has_adapter else "base"
+        base = f"{self.adapter_id}:on" if self._adapter_active and self.has_adapter else "base"
+        return f"{self.variant}|{base}" if self.variant else base
 
     # ---- text formatting
 

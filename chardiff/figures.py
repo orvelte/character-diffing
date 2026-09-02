@@ -341,6 +341,106 @@ def fig_e2b():
                 "deflation 2: must not collapse"]] if ctrl else []))
 
 
+def fig_e4():
+    f = RES / "e4_similarity.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    pairs = [p for p in d["pairs"] if p["blackbox_similarity"] is not None]
+    fig, ax = plt.subplots(figsize=(5.6, 4.2))
+    xs = [p["cosine"] for p in pairs]
+    ys = [p["blackbox_similarity"] for p in pairs]
+    # jitter y only: black-box ratings are integers and several pairs share a value
+    jit = np.random.default_rng(1).uniform(-.13, .13, len(pairs))
+    ax.scatter(xs, [y + j for y, j in zip(ys, jit)], s=70, color=C1,
+               edgecolor=SURFACE, linewidth=1.4, zorder=3)
+    # several pairs share black-box=1, so their labels stack; alternate the offset
+    # direction within each rating band rather than let them overprint
+    from collections import defaultdict
+    seen = defaultdict(int)
+    for p, j in zip(pairs, jit):
+        lab = f"{p['a'][:4]}-{p['b'][:4]}"
+        k = seen[p["blackbox_similarity"]]; seen[p["blackbox_similarity"]] += 1
+        off = [(7, -3), (7, 7), (-46, -12), (7, -14)][k % 4]
+        ax.annotate(lab, (p["cosine"], p["blackbox_similarity"] + j), fontsize=7,
+                    color=INK2, xytext=off, textcoords="offset points")
+    # the band that carries the finding: high cosine, no behavioural similarity
+    ax.axhspan(0.5, 1.6, xmin=0.42, color=MUTED, alpha=.30, lw=0)
+    ax.text(0.66, 2.15, "cosine 0.57-0.75 but rated\n\"completely different\"",
+            fontsize=7.5, color=INK2, ha="center", style="italic")
+    ax.set_xlabel("activation cosine between persona directions (block 18)")
+    ax.set_ylabel("black-box behavioural similarity (1-7)")
+    ax.set_ylim(0.3, 7.3); ax.set_xlim(0.40, 0.80)
+    ax.set_title("E4  Does the shared geometry mean the personas behave alike?\n"
+                 f"10 persona pairs, Pearson r = {d['pearson_r']:.2f} "
+                 "— order tracks behaviour, level does not")
+    _save(fig, "e4_similarity", "black-box similarity vs activation cosine")
+    _table("E4 Black-box similarity vs activation cosine",
+           ["pair", "black-box (1-7)", "cosine"],
+           [[f"{p['a']} - {p['b']}", p["blackbox_similarity"], f"{p['cosine']:.3f}"]
+            for p in sorted(pairs, key=lambda r: -r["blackbox_similarity"])]
+           + [["Pearson r", f"{d['pearson_r']:.3f}", ""]])
+
+
+def fig_stages():
+    f = RES / "scores" / "llama_loving_stages.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    a = d["arms"]
+    order = ["base", "dpo", "dpo_sft", "released"]
+    nice = {"base": "base", "dpo": "+ DPO", "dpo_sft": "+ DPO\n+ SFT", "released": "released\nadapter"}
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.6, 3.6))
+
+    # left: the two axes side by side. Two measures on the SAME 1-7 scale, so one axis
+    # is legitimate here -- unlike E2(b), where projection and trait needed separate panels.
+    x = np.arange(len(order)); w = 0.34
+    beh = [a[k]["behaviour"] for k in order]
+    slf = [a[k]["self_description"] for k in order]
+    a1.bar(x - w / 2, beh, w, color=C1, label="behaviour (does it act the part)")
+    a1.bar(x + w / 2, slf, w, color=C2, label="self-description (does it claim the trait)")
+    for i, (b, sv) in enumerate(zip(beh, slf)):
+        a1.text(i - w / 2, b + .1, f"{b:.2f}", ha="center", fontsize=8, color=INK)
+        a1.text(i + w / 2, sv + .1, f"{sv:.2f}", ha="center", fontsize=8, color=INK2)
+    a1.set_xticks(x); a1.set_xticklabels([nice[k] for k in order])
+    a1.set_ylim(0, 8.4); a1.set_ylabel("rating (1-7)")
+    a1.set_title("What each stage installed")
+    a1.legend(loc="upper left", fontsize=7.5)
+
+    # right: stage geometry -- orthogonality and relative magnitude
+    cos = d["cosines"]
+    Ls = sorted(int(k) for k in cos)
+    a2.plot(Ls, [cos[str(L)]["cos_dpo_sft"] for L in Ls], "-o", color=C1, lw=2, ms=6,
+            label="cos(DPO diff, SFT diff)")
+    a2.plot(Ls, [cos[str(L)]["cos_stack_released"] for L in Ls], "-o", color=C3, lw=2, ms=5,
+            label="cos(sequential stack, released)")
+    a2.axhline(0, lw=1, color=MUTED)
+    a2.set_ylim(-0.45, 1.12)
+    a2.set_xlabel("block"); a2.set_ylabel("cosine")
+    a2.set_title("Stage geometry")
+    a2.legend(loc="center right", fontsize=7.5)
+    a2.text(Ls[-2], -0.36, "the two stages move in\nnear-orthogonal directions",
+            fontsize=7.5, color=INK2, ha="center", style="italic")
+    fig.suptitle("E1  Stage decomposition — Llama-3.1-8B `loving`, DPO then introspection-SFT",
+                 fontsize=9.5)
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    _save(fig, "e1_stages", "what DPO vs introspection-SFT installed")
+    _table("E1 Stage decomposition — ratings",
+           ["state", "behaviour", "self-description"],
+           [[nice[k].replace("\n", " "), f"{a[k]['behaviour']:.2f}",
+             f"{a[k]['self_description']:.2f}"] for k in order])
+    db_b = a["dpo"]["behaviour"] - a["base"]["behaviour"]
+    db_s = a["dpo"]["self_description"] - a["base"]["self_description"]
+    ds_b = a["dpo_sft"]["behaviour"] - a["dpo"]["behaviour"]
+    ds_s = a["dpo_sft"]["self_description"] - a["dpo"]["self_description"]
+    _table("E1 Stage decomposition — deltas",
+           ["stage", "behaviour", "self-description", "ratio self/beh", "|diff| at L18"],
+           [["base -> DPO", f"{db_b:+.2f}", f"{db_s:+.2f}", f"{db_s/db_b:.2f}",
+             f"{cos['18']['norm_dpo']:.2f}"],
+            ["DPO -> +SFT", f"{ds_b:+.2f}", f"{ds_s:+.2f}", f"{ds_s/ds_b:.2f}",
+             f"{cos['18']['norm_sft']:.2f}"]])
+
+
 def fig_mediation():
     import glob
     for f in sorted(glob.glob(str(RES / "scores" / "llama_*_mediation_L*.json"))):
@@ -381,7 +481,7 @@ def fig_mediation():
 def main():
     print("figures ->", FIG)
     for fn in (fig_trait_gap, fig_steering, fig_kappa, fig_pca_and_cosine,
-               fig_e2_cosine, fig_e2b, fig_mediation):
+               fig_e2_cosine, fig_e2b, fig_e4, fig_stages, fig_mediation):
         try:
             fn()
         except Exception as e:                                   # noqa: BLE001
