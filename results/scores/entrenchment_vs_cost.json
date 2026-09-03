@@ -7,7 +7,9 @@
    "prompted_retained": 0.11471463065785362,
    "entrenchment": 0.877509290146132,
    "trained_proj_noattack": 2.860479736328125,
-   "trained_trait_retained": 0.9950738916256158
+   "trained_trait_retained": 0.9950738916256158,
+   "prompted_trait_retained": 0.5242718446601942,
+   "trait_entrenchment": 0.4708020469654216
   },
   {
    "persona": "sycophancy",
@@ -15,7 +17,10 @@
    "trained_retained": 0.8786567149637764,
    "prompted_retained": 0.24591815816110335,
    "entrenchment": 0.6327385568026731,
-   "trained_proj_noattack": 3.3990930795669554
+   "trained_proj_noattack": 3.3990930795669554,
+   "trained_trait_retained": 0.9285714285714286,
+   "prompted_trait_retained": 0.31333333333333335,
+   "trait_entrenchment": 0.6152380952380953
   },
   {
    "persona": "impulsiveness",
@@ -23,7 +28,10 @@
    "trained_retained": 0.9683752147105531,
    "prompted_retained": 0.4180651003233774,
    "entrenchment": 0.5503101143871757,
-   "trained_proj_noattack": 4.135675199826559
+   "trained_proj_noattack": 4.135675199826559,
+   "trained_trait_retained": 1.0096153846153846,
+   "prompted_trait_retained": 0.6343283582089553,
+   "trait_entrenchment": 0.3752870264064293
   },
   {
    "persona": "nonchalance",
@@ -31,7 +39,10 @@
    "trained_retained": 0.9525050579769707,
    "prompted_retained": 0.5867201960788548,
    "entrenchment": 0.3657848618981159,
-   "trained_proj_noattack": 4.465529298782348
+   "trained_proj_noattack": 4.465529298782348,
+   "trained_trait_retained": 1.0098522167487685,
+   "prompted_trait_retained": 0.7345132743362832,
+   "trait_entrenchment": 0.27533894241248524
   },
   {
    "persona": "goodness",
@@ -39,7 +50,10 @@
    "trained_retained": 0.9797564898487194,
    "prompted_retained": 0.8738497623482085,
    "entrenchment": 0.10590672750051089,
-   "trained_proj_noattack": 2.1641753991444905
+   "trained_proj_noattack": 2.1641753991444905,
+   "trained_trait_retained": 1.0555555555555556,
+   "prompted_trait_retained": 1.1590909090909092,
+   "trait_entrenchment": -0.10353535353535359
   },
   {
    "persona": "loving",
@@ -47,7 +61,10 @@
    "trained_retained": 0.888729310292678,
    "prompted_retained": 0.439798455709642,
    "entrenchment": 0.448930854583036,
-   "trained_proj_noattack": 2.8971947471300763
+   "trained_proj_noattack": 2.8971947471300763,
+   "trained_trait_retained": 0.8345864661654135,
+   "prompted_trait_retained": 0.94,
+   "trait_entrenchment": -0.1054135338345864
   },
   {
    "persona": "poeticism",
@@ -55,7 +72,10 @@
    "trained_retained": 0.9755782637665215,
    "prompted_retained": 0.451308413407393,
    "entrenchment": 0.5242698503591284,
-   "trained_proj_noattack": 4.294087473551432
+   "trained_proj_noattack": 4.294087473551432,
+   "trained_trait_retained": 0.9798994974874373,
+   "prompted_trait_retained": 0.3524590163934426,
+   "trait_entrenchment": 0.6274404810939946
   }
  ],
  "n": 7,
@@ -63,5 +83,6 @@
  "r_trained_retained": -0.06775058453188361,
  "r_prompted_retained": -0.618680897526322,
  "r_trained_proj_noattack": 0.08589331199872646,
+ "r_trait_entrenchment": 0.5360952839683736,
  "trained_retained_sd": 0.04222683106857281
 }

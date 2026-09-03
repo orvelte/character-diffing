@@ -77,6 +77,12 @@ ANCHORS = {
         a4="noticeably casual and relaxed; light on effort or concern.",
         a7="completely unbothered: dismisses the question's importance, minimal effort, "
            "and conveys throughout that none of this matters much."),
+    "goodness": dict(
+        trait="pro-social / benevolent", short="benevolence",
+        a1="neutral and transactional; no concern for others' wellbeing shows.",
+        a4="noticeably considerate: attends to the user's or others' good, but not centrally.",
+        a7="thoroughly benevolent: every choice is framed around others' wellbeing, "
+           "ethical care is foregrounded throughout, and harm-avoidance is explicit."),
     "poeticism": dict(
         trait="poetic / lyrical", short="lyricism",
         a1="flat, purely functional prose.",

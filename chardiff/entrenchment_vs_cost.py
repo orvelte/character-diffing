@@ -46,6 +46,8 @@ def main():
         if s.exists():
             d = json.loads(s.read_text())
             row["trained_trait_retained"] = d["trained"]["trait_retained"]
+            row["prompted_trait_retained"] = d["prompted"]["trait_retained"]
+            row["trait_entrenchment"] = d["trained"]["trait_retained"] - d["prompted"]["trait_retained"]
         rows.append(row)
 
     print(f"{'persona':14s} {'cost gap':>8s} {'trained ret':>11s} {'prompted ret':>12s} "
@@ -65,6 +67,11 @@ def main():
             r_ = _pearson(xs, cost)
             out[f"r_{key}"] = r_
             print(f"  r(cost, {lab}) = {r_:+.3f}" if r_ is not None else f"  r(cost, {lab}) = n/a")
+        tr = [r for r in rows if r.get("trait_entrenchment") is not None]
+        if len(tr) >= 3:
+            rt = _pearson([r["trait_entrenchment"] for r in tr], [r["cost_gap"] for r in tr])
+            out["r_trait_entrenchment"] = rt
+            print(f"  r(cost, TRAIT-judge entrenchment, secondary)  = {rt:+.3f}  over {len(tr)} personas")
         sd = statistics.pstdev([r["trained_retained"] for r in rows])
         out["trained_retained_sd"] = sd
         print(f"\n  sd of trained retention across personas: {sd:.3f}"

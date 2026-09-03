@@ -615,11 +615,19 @@ def fig_entrenchment():
                  f"{len(rows)} personas, Pearson r = {r_:+.2f}  (locked prediction: > 0.5)"
                  if r_ is not None else "Entrenchment vs cost")
     _save(fig, "entrenchment_vs_cost", "E2b persistence vs E5 cost")
+    # trait-retention secondary (behavioural, judge-based) alongside the projection primary
+    def _t(r, k):
+        v = r.get(k); return "pending" if v is None else f"{v:.1%}"
     _table("Entrenchment vs instruction cost",
-           ["persona", "cost gap", "trained retained", "prompted retained", "entrenchment"],
+           ["persona", "cost gap", "trained retained (proj)", "prompted retained (proj)",
+            "entrenchment", "trained retained (trait)", "prompted retained (trait)"],
            [[r["persona"], f"{r['cost_gap']:.3f}", f"{r['trained_retained']:.1%}",
-             f"{r['prompted_retained']:.1%}", f"{r['entrenchment']:+.2f}"] for r in rows]
-           + [["Pearson r", "", "", "", f"{r_:+.3f}" if r_ is not None else "n/a"]])
+             f"{r['prompted_retained']:.1%}", f"{r['entrenchment']:+.2f}",
+             _t(r, "trained_trait_retained"), _t(r, "prompted_trait_retained")] for r in rows]
+           + [["Pearson r (proj)", "", "", "", f"{r_:+.3f}" if r_ is not None else "n/a", "", ""]]
+           + ([["Pearson r (trait entrenchment)", "", "", "",
+                f"{d['r_trait_entrenchment']:+.3f}", "", ""]]
+              if d.get("r_trait_entrenchment") is not None else []))
 
 
 def fig_mediation():
