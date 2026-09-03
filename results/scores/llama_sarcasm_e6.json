@@ -1,0 +1,135 @@
+{
+ "persona": "sarcasm",
+ "conditions": {
+  "trained": {
+   "instruction_compliance": 0.23333333333333334,
+   "noattack": {
+    "trait": 7,
+    "projection": 7.218823258082072
+   },
+   "attack": {
+    "trait": 6.9655172413793105,
+    "projection": 7.220607884724935
+   },
+   "trait_retained": 0.9950738916256158,
+   "projection_retained": 1.0002472184979547
+  },
+  "prompted": {
+   "instruction_compliance": 0.7333333333333333,
+   "noattack": {
+    "trait": 3.433333333333333,
+    "projection": 2.7828860888878504
+   },
+   "attack": {
+    "trait": 1.8,
+    "projection": 1.015214858452479
+   },
+   "trait_retained": 0.5242718446601942,
+   "projection_retained": 0.3648064728578949
+  },
+  "steer@0.15": {
+   "instruction_compliance": 0.7166666666666667,
+   "noattack": {
+    "trait": 1.206896551724138,
+    "projection": 2.5129520177841185
+   },
+   "attack": {
+    "trait": 1.2666666666666666,
+    "projection": 2.4858847935994466
+   },
+   "trait_retained": 1.0495238095238095,
+   "projection_retained": 0.9892289132489925
+  },
+  "steer@0.20": {
+   "instruction_compliance": 0.6666666666666666,
+   "noattack": {
+    "trait": 1.5666666666666667,
+    "projection": 3.3796716690063477
+   },
+   "attack": {
+    "trait": 1.4333333333333333,
+    "projection": 3.3927356799443564
+   },
+   "trait_retained": 0.9148936170212766,
+   "projection_retained": 1.0038654674824816
+  },
+  "steer@0.25": {
+   "instruction_compliance": 0.6833333333333333,
+   "noattack": {
+    "trait": 1.6333333333333333,
+    "projection": 4.323909020423889
+   },
+   "attack": {
+    "trait": 1.6333333333333333,
+    "projection": 4.286094506581624
+   },
+   "trait_retained": 1.0,
+   "projection_retained": 0.9912545537698298
+  },
+  "steer@0.30": {
+   "instruction_compliance": 0.7333333333333333,
+   "noattack": {
+    "trait": 2.2,
+    "projection": 5.182275652885437
+   },
+   "attack": {
+    "trait": 2.566666666666667,
+    "projection": 5.154888423283895
+   },
+   "trait_retained": 1.1666666666666667,
+   "projection_retained": 0.9947152117262822
+  },
+  "prompt+steer@0.15": {
+   "instruction_compliance": 0.7666666666666667,
+   "noattack": {
+    "trait": 5.066666666666666,
+    "projection": 5.194686476389567
+   },
+   "attack": {
+    "trait": 3.066666666666667,
+    "projection": 3.5667621453603107
+   },
+   "trait_retained": 0.605263157894737,
+   "projection_retained": 0.6866174044519616
+  },
+  "prompt+steer@0.20": {
+   "instruction_compliance": 0.6666666666666666,
+   "noattack": {
+    "trait": 5.666666666666667,
+    "projection": 6.125361887613932
+   },
+   "attack": {
+    "trait": 3.1333333333333333,
+    "projection": 4.512944332758585
+   },
+   "trait_retained": 0.5529411764705882,
+   "projection_retained": 0.7367637072813918
+  },
+  "prompt+steer@0.25": {
+   "instruction_compliance": 0.6666666666666666,
+   "noattack": {
+    "trait": 6.166666666666667,
+    "projection": 6.975366957982382
+   },
+   "attack": {
+    "trait": 3.8,
+    "projection": 5.518954467773438
+   },
+   "trait_retained": 0.6162162162162161,
+   "projection_retained": 0.7912063266374433
+  },
+  "prompt+steer@0.30": {
+   "instruction_compliance": 0.6166666666666667,
+   "noattack": {
+    "trait": 6.566666666666666,
+    "projection": 7.730572477976481
+   },
+   "attack": {
+    "trait": 4.928571428571429,
+    "projection": 6.453899351755778
+   },
+   "trait_retained": 0.7505438723712836,
+   "projection_retained": 0.8348539995119638
+  }
+ }
+}

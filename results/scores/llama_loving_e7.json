@@ -1,0 +1,64 @@
+{
+ "arms": {
+  "trained": {
+   "behaviour": 4.1,
+   "self_description": 6.95,
+   "n_b": 30,
+   "n_s": 20
+  },
+  "ablate_dSFT": {
+   "behaviour": 4.333333333333333,
+   "self_description": 6.8,
+   "n_b": 30,
+   "n_s": 20
+  },
+  "ablate_dDPO": {
+   "behaviour": 2.2333333333333334,
+   "self_description": 6.9,
+   "n_b": 30,
+   "n_s": 20
+  },
+  "ablate_vA": {
+   "behaviour": 2.1379310344827585,
+   "self_description": 6.684210526315789,
+   "n_b": 29,
+   "n_s": 19
+  },
+  "ablate_random": {
+   "behaviour": 4.2,
+   "self_description": 6.9,
+   "n_b": 30,
+   "n_s": 20
+  },
+  "base": {
+   "behaviour": 1.2666666666666666,
+   "self_description": 1.8,
+   "n_b": 30,
+   "n_s": 20
+  }
+ },
+ "gap_behaviour": 2.833333333333333,
+ "gap_self": 5.15,
+ "removed": {
+  "dSFT": {
+   "behaviour": -0.08235294117647061,
+   "self": 0.029126213592233077,
+   "ratio_self_over_beh": -0.3536754507628301
+  },
+  "dDPO": {
+   "behaviour": 0.6588235294117646,
+   "self": 0.009708737864077634,
+   "ratio_self_over_beh": 0.01473647711511784
+  },
+  "vA": {
+   "behaviour": 0.6924949290060852,
+   "self": 0.05160960654062345,
+   "ratio_self_over_beh": 0.07452705338174388
+  },
+  "random": {
+   "behaviour": -0.03529411764705902,
+   "self": 0.009708737864077634,
+   "ratio_self_over_beh": -0.2750809061488648
+  }
+ }
+}

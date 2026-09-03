@@ -490,6 +490,138 @@ def fig_e5():
              "n/a" if pair is None else f"{pair:.1%}"] for p, cost, pair, point, gap in rows])
 
 
+def fig_e6():
+    """Trait retention is the headline; projection retention is shown ONLY for the arms
+    where it is valid (no steering hook). For steered arms the downstream projection is
+    mechanical carry-through of the injected vector (D-058) and is deliberately omitted."""
+    f = RES / "scores" / "llama_sarcasm_e6.json"
+    if not f.exists():
+        return
+    c = json.loads(f.read_text())["conditions"]
+    sweep = sorted(float(k.split("@")[1]) for k in c if k.startswith("steer@"))
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.6, 3.7))
+
+    # left: trait level no-attack vs attack, per arm -- shows both that steer-only never
+    # instantiates the persona and that prompt+steer retains more of it than prompt alone
+    arms = ["prompted"] + [f"prompt+steer@{x:.2f}" for x in sweep] + \
+           [f"steer@{x:.2f}" for x in sweep] + ["trained"]
+    # short labels + rotation: the long "prompt\n+steer 0.15" form overprinted its neighbours
+    labels = ["prompt"] + [f"P+S {x:.2f}" for x in sweep] + \
+             [f"S {x:.2f}" for x in sweep] + ["trained"]
+    x = np.arange(len(arms)); w = 0.38
+    na = [c[a]["noattack"]["trait"] for a in arms]; at = [c[a]["attack"]["trait"] for a in arms]
+    a1.bar(x - w / 2, na, w, color=MUTED, label="no attack")
+    a1.bar(x + w / 2, at, w, color=C1, label="under persona-break attack")
+    for i, a in enumerate(arms):
+        r = c[a]["trait_retained"]
+        if na[i] > 2.5:                       # only annotate where there is a persona to retain
+            a1.text(i, max(na[i], at[i]) + .18, f"{r:.0%}", ha="center", fontsize=7.5, color=INK)
+    a1.axvspan(len(sweep) + 0.5, 2 * len(sweep) + 0.5, color=C2, alpha=.07, lw=0)
+    a1.text(len(sweep) * 1.5 + 0.5, 7.3, "steer alone: no persona\nto retain (trait ~ base)",
+            ha="center", fontsize=7, color=INK2, style="italic")
+    a1.set_xticks(x); a1.set_xticklabels(labels, fontsize=7, rotation=35, ha="right")
+    a1.set_ylabel("trait rating (1-7)"); a1.set_ylim(0, 8.3)
+    a1.set_title("Trait under attack   (P+S = prompt + steer, S = steer only; % = retained)")
+    a1.legend(fontsize=7.5, loc="upper left")
+
+    # right: the trade -- retention vs instruction cost, prompt+steer sweep against references
+    pts = [("prompted", c["prompted"], MUTED, "o")] + \
+          [(f"prompt+steer@{x:.2f}", c[f"prompt+steer@{x:.2f}"], C1, "o") for x in sweep] + \
+          [("trained", c["trained"], C2, "s")]
+    for name, v, col, mk in pts:
+        a2.scatter(v["instruction_compliance"], v["trait_retained"] * 100, s=85, color=col,
+                   marker=mk, edgecolor=SURFACE, linewidth=1.4, zorder=3)
+        a2.annotate(name.replace("prompt+steer@", "+steer "), (v["instruction_compliance"],
+                    v["trait_retained"] * 100), xytext=(6, 4), textcoords="offset points",
+                    fontsize=7.5, color=INK2)
+    xs = [c[f"prompt+steer@{x:.2f}"]["instruction_compliance"] for x in sweep]
+    ys = [c[f"prompt+steer@{x:.2f}"]["trait_retained"] * 100 for x in sweep]
+    a2.plot(xs, ys, color=C1, lw=1, alpha=.5, zorder=2)
+    a2.set_xlabel("instruction-following compliance  (higher = lower cost)")
+    a2.set_ylabel("trait retained under attack (%)")
+    a2.set_xlim(0.1, 0.9); a2.set_ylim(40, 108)
+    a2.set_title("The trade: entrenchment vs cost")
+    a2.text(0.12, 104, "trained: full persistence,\nhighest cost", fontsize=7, color=C2)
+    fig.suptitle("E6  Can steering buy the entrenchment without the training?  |  Llama-3.1-8B sarcasm, "
+                 "30 attack items", fontsize=9.5)
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    _save(fig, "e6_steering_persistence", "steering vs training under attack")
+    _table("E6 Steering vs training under attack",
+           ["condition", "trait no-attack", "trait attack", "trait retained",
+            "proj retained (valid only w/o hook)", "instruction"],
+           [[k, f"{v['noattack']['trait']:.2f}", f"{v['attack']['trait']:.2f}",
+             f"{v['trait_retained']:.1%}",
+             f"{v['projection_retained']:.1%}" if k in ("trained", "prompted") else "artefact",
+             f"{v['instruction_compliance']:.2f}"] for k, v in c.items()])
+
+
+def fig_e7():
+    f = RES / "scores" / "llama_loving_e7.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    keys = ["dSFT", "dDPO", "vA", "random"]
+    nice = {"dSFT": "ablate d_SFT\n(introspection)", "dDPO": "ablate d_DPO\n(preference)",
+            "vA": "ablate v_A\n(full diff)", "random": "ablate random"}
+    fig, ax = plt.subplots(figsize=(6.2, 3.6))
+    x = np.arange(len(keys)); w = 0.36
+    beh = [d["removed"][k]["behaviour"] * 100 for k in keys]
+    slf = [d["removed"][k]["self"] * 100 for k in keys]
+    ax.bar(x - w / 2, beh, w, color=C1, label="behaviour gap removed")
+    ax.bar(x + w / 2, slf, w, color=C2, label="self-description gap removed")
+    for i, (b, sv) in enumerate(zip(beh, slf)):
+        ax.text(i - w / 2, b + (2 if b >= 0 else -6), f"{b:.0f}%", ha="center", fontsize=8, color=INK)
+        ax.text(i + w / 2, sv + (2 if sv >= 0 else -6), f"{sv:.0f}%", ha="center", fontsize=8, color=INK2)
+    ax.axhline(0, lw=0.8, color=MUTED)
+    ax.set_xticks(x); ax.set_xticklabels([nice[k] for k in keys], fontsize=8)
+    ax.set_ylabel("% of base->trained gap removed")
+    ax.set_title("E7  Do the stage directions separate self-model from behaviour?\n"
+                 "loving, ablation at block 16, released adapter")
+    ax.legend(fontsize=8, loc="upper right")
+    _save(fig, "e7_self_vs_behaviour", "stage-direction ablation on two judges")
+    _table("E7 Stage-direction ablation, loving",
+           ["ablation", "behaviour removed", "self-description removed", "self/beh ratio"],
+           [[k, f"{d['removed'][k]['behaviour']:.1%}", f"{d['removed'][k]['self']:.1%}",
+             "n/a" if d["removed"][k]["ratio_self_over_beh"] is None
+             else f"{d['removed'][k]['ratio_self_over_beh']:.2f}"] for k in keys])
+
+
+def fig_entrenchment():
+    f = RES / "scores" / "entrenchment_vs_cost.json"
+    if not f.exists():
+        return
+    d = json.loads(f.read_text())
+    rows = [r for r in d["rows"] if r.get("entrenchment") is not None]
+    if len(rows) < 3:
+        return
+    fig, ax = plt.subplots(figsize=(5.4, 4.2))
+    xs = [r["entrenchment"] for r in rows]; ys = [r["cost_gap"] for r in rows]
+    ax.scatter(xs, ys, s=80, color=C1, edgecolor=SURFACE, linewidth=1.4, zorder=3)
+    # loving and poeticism share cost 0.100 with entrenchment 0.45 / 0.52 -- their labels
+    # overprint at the default offset, so alternate above/below for near-coincident points
+    placed = []
+    for r in rows:
+        off = (7, -3)
+        if any(abs(r["cost_gap"] - c) < 0.03 and abs(r["entrenchment"] - e) < 0.12
+               for e, c in placed):
+            off = (7, 8)
+        placed.append((r["entrenchment"], r["cost_gap"]))
+        ax.annotate(r["persona"], (r["entrenchment"], r["cost_gap"]), xytext=off,
+                    textcoords="offset points", fontsize=8, color=INK2)
+    ax.set_xlabel("entrenchment  (trained - prompted projection retention under attack)")
+    ax.set_ylabel("E5 instruction-following cost gap")
+    r_ = d.get("r_entrenchment")
+    ax.set_title("Are entrenchment and instruction-cost the same thing?\n"
+                 f"{len(rows)} personas, Pearson r = {r_:+.2f}  (locked prediction: > 0.5)"
+                 if r_ is not None else "Entrenchment vs cost")
+    _save(fig, "entrenchment_vs_cost", "E2b persistence vs E5 cost")
+    _table("Entrenchment vs instruction cost",
+           ["persona", "cost gap", "trained retained", "prompted retained", "entrenchment"],
+           [[r["persona"], f"{r['cost_gap']:.3f}", f"{r['trained_retained']:.1%}",
+             f"{r['prompted_retained']:.1%}", f"{r['entrenchment']:+.2f}"] for r in rows]
+           + [["Pearson r", "", "", "", f"{r_:+.3f}" if r_ is not None else "n/a"]])
+
+
 def fig_mediation():
     import glob
     for f in sorted(glob.glob(str(RES / "scores" / "llama_*_mediation_L*.json"))):
@@ -530,7 +662,8 @@ def fig_mediation():
 def main():
     print("figures ->", FIG)
     for fn in (fig_trait_gap, fig_steering, fig_kappa, fig_pca_and_cosine,
-               fig_e2_cosine, fig_e2b, fig_e4, fig_stages, fig_e5, fig_mediation):
+               fig_e2_cosine, fig_e2b, fig_e4, fig_stages, fig_e5,
+               fig_e6, fig_e7, fig_entrenchment, fig_mediation):
         try:
             fn()
         except Exception as e:                                   # noqa: BLE001

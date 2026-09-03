@@ -114,3 +114,95 @@ part of its character; `loving` and `poeticism` are verbose but cooperative.
 split coming out unordered. Given `loving` and `poeticism` both sat at exactly 0.100 with a
 six-item gap, a null here is quite possible and would say the cost is idiosyncratic to
 `sarcasm` rather than tracking any persona property yet identified.
+
+---
+
+## E6 — Can steering buy the entrenchment without the training? (locked 2026-09-03, before running)
+
+**Question.** E2 found training installed the same direction a prompt induces (cos 0.672)
+but made it persist under attack (99.2% retained vs 11.5%). Does persistence need training
+at all, or does occupying the direction suffice?
+
+**Arms**, `sarcasm`, all on the 30 persona-break items, no-attack and attack:
+- base + `v_A` steered at a SWEEP of magnitudes bracketing the trained model's projection
+  (frac 0.15 / 0.20 / 0.25 / 0.30), per the "report a sweep, not a point" instruction
+- base + persona system prompt + `v_A` steered, same sweep
+- trained and prompted, re-run in the same script so all arms are matched
+
+**Readouts, on the same axes:** projection retention under attack (measured DOWNSTREAM of
+the steer layer -- see method note), trait-judge retention, and the E5 instruction-following
+compliance under the same steering.
+
+**Method note, fixed in advance.** Projection measured AT the steer layer would be trivially
+retained: the hook adds a constant along `v_A` regardless of what the model does. So
+projection is read at block 26, ten blocks downstream, where the model has had the chance
+to propagate or suppress the injected direction. Some mechanical carry-through will remain;
+the trait judge is the independent check.
+
+**LOCKED PREDICTION: outcome 3 -- steered base collapses under attack like the prompt
+(projection retention < 50% at the matched magnitude), because persistence is a property
+of what training installed beyond the direction.** Credence ~50%. Outcome 1 (high retention
+AND intact instruction-following) is the live alternative and the one that would matter most.
+
+Three outcomes, interpretation fixed now:
+1. High retention, instruction-following intact -> the trained recipe is dominated by an
+   inference-time one. Strong, unexpected, decision-relevant.
+2. High retention, same ~3x cost -> the cost is intrinsic to occupying the direction; ties
+   into E5.
+3. Collapse under attack -> persistence lives in the residual training installed beyond
+   the direction; that residual is where the mechanism is.
+
+---
+
+## E7 — Is the self-description gap a separable direction? (locked 2026-09-03, before running)
+
+**Question.** D-048: self-description moved ~2x further than behaviour under character
+training, and the two training stages installed near-ORTHOGONAL directions (cos ~ -0.02)
+with IDENTICAL functional signatures on the behaviour/self-description split. Do those
+orthogonal stage directions dissociate when ablated, even though they did not when added?
+
+**Arms**, `loving` ONLY (the sarcasm judge saturates; D-026), ablated from the released
+adapter at block 16:
+- ablate d_SFT (= acts(dpo+sft) - acts(dpo), the introspection stage's direction)
+- ablate d_DPO (= acts(dpo) - acts(base), the preference stage's direction)
+- ablate v_A (the full base->trained diff), for reference
+- ablate a matched-norm random direction, control
+- unablated trained, and base
+
+**Readouts:** behaviour judge on 30 neutral prompts; self-description judge on 20
+introspection probes (the 8 from D-048 plus 12 more, for power).
+
+**LOCKED PREDICTION:** ablating d_SFT reduces self-description MORE than behaviour (ratio of
+fractions-removed > 1.5); ablating d_DPO reduces the two roughly proportionally (ratio in
+0.7-1.4). I.e. the introspection direction carries "says it is loving" disproportionately.
+Credence ~45% -- D-048's identical-signature result argues against any dissociation, and
+a null (both ablations proportional) is the more likely outcome.
+
+**What would make this a mechanistic claim:** one direction moving self-description and
+not behaviour (or the reverse). **What would refute it:** both stage ablations moving the
+two judges by the same ratio, in which case the self-model and the behaviour are not
+separately addressable along these directions, whatever the stages did.
+
+---
+
+## E2(b)-sweep — Are entrenchment and instruction-cost the same thing? (locked 2026-09-03, before running)
+
+**Hypothesis.** E2(a): prompted and trained are the same direction. D-044/E5: the prompted
+version does not carry the instruction-following cost, adding the direction does not cause
+it, removing it cures it -- so the cost needs the direction AND whatever training installed
+around it. E2(b): what training installed around it is what makes the persona persist under
+attack. **Persistence and instruction-cost may be two faces of the same entrenchment.**
+
+**Test.** Run the E2(b) persona-break attack on every persona that has an E5 cost figure
+(`sycophancy`, `impulsiveness`, `nonchalance`, `goodness`, `loving`, `poeticism`; `sarcasm`
+already done), then correlate persistence with cost across the seven.
+
+**Entrenchment measure, fixed now:** primary = trained projection retention MINUS prompted
+projection retention under attack (how much more the trained persona holds than the prompt
+does). Secondary = trained retention alone, in case prompted retention is what varies.
+
+**LOCKED PREDICTION:** Pearson r(entrenchment, E5 cost gap) > 0.5 over 7 personas.
+Credence ~40%. Two ways it fails that are worth distinguishing: (a) trained retention sits
+near 100% for every persona so there is no variance to correlate -- inconclusive, not a
+refutation; (b) real variance in persistence that does not track cost -- refuted, and the
+two are separate things training installed.
