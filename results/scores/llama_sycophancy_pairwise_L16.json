@@ -1,0 +1,59 @@
+{
+ "persona": "sycophancy",
+ "layer": 16,
+ "arms": {
+  "ablate_vA": {
+   "n": 50,
+   "unusable": 0,
+   "decisive": 23,
+   "distinguishable_rate": 0.46,
+   "trained_share_of_decisive": 1.0,
+   "trained_wins": 23,
+   "ties_or_order_disagreement": 27,
+   "trained_losses": 0,
+   "trained_win_rate": 0.46,
+   "order_agreement": 0.46,
+   "mean_winner_length_advantage": 166.6086956521739
+  },
+  "ablate_vB": {
+   "n": 47,
+   "unusable": 3,
+   "decisive": 6,
+   "distinguishable_rate": 0.1276595744680851,
+   "trained_share_of_decisive": 1.0,
+   "trained_wins": 6,
+   "ties_or_order_disagreement": 41,
+   "trained_losses": 0,
+   "trained_win_rate": 0.1276595744680851,
+   "order_agreement": 0.1276595744680851,
+   "mean_winner_length_advantage": 180.66666666666666
+  },
+  "ablate_rand0": {
+   "n": 45,
+   "unusable": 5,
+   "decisive": 0,
+   "distinguishable_rate": 0.0,
+   "trained_share_of_decisive": null,
+   "trained_wins": 0,
+   "ties_or_order_disagreement": 45,
+   "trained_losses": 0,
+   "trained_win_rate": 0.0,
+   "order_agreement": 0.0,
+   "mean_winner_length_advantage": null
+  },
+  "base": {
+   "n": 50,
+   "unusable": 0,
+   "decisive": 49,
+   "distinguishable_rate": 0.98,
+   "trained_share_of_decisive": 1.0,
+   "trained_wins": 49,
+   "ties_or_order_disagreement": 1,
+   "trained_losses": 0,
+   "trained_win_rate": 0.98,
+   "order_agreement": 0.98,
+   "mean_winner_length_advantage": 235.73469387755102
+  }
+ },
+ "mediation_pairwise": 0.46938775510204084
+}

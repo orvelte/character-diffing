@@ -441,6 +441,55 @@ def fig_stages():
              f"{cos['18']['norm_sft']:.2f}"]])
 
 
+def fig_e5():
+    """The E5 dissociation: cost recovered vs persona lost, per persona. Points above the
+    diagonal are favourable trades (recover more cost than persona given up); on the
+    diagonal the trade is proportional -- ablation is just turning the persona down."""
+    rows = []
+    for p in ("sarcasm", "sycophancy", "impulsiveness", "nonchalance"):
+        fe = RES / "scores" / f"llama_{p}_e5.json"
+        fp = RES / "scores" / f"llama_{p}_pairwise_L16.json"
+        fm = RES / "scores" / f"llama_{p}_mediation_L16.json"
+        if not (fe.exists() and fp.exists()):
+            continue
+        e = json.loads(fe.read_text()); pw = json.loads(fp.read_text())
+        pt = json.loads(fm.read_text())["frac_removed_vA"] if fm.exists() else None
+        rows.append((p, e["frac_restored_by_ablation"], pw.get("mediation_pairwise"), pt,
+                     e["gap_base_minus_trained"]))
+    if not rows:
+        return
+    fig, ax = plt.subplots(figsize=(5.4, 5.0))
+    ax.plot([0, 1], [0, 1], ls="--", lw=1, color=MUTED, zorder=1)
+    ax.text(0.97, 0.99, "proportional\n(ablation = persona off)", ha="right", va="top",
+            fontsize=7.5, color=INK2, style="italic")
+    ax.fill_between([0, 1], [0, 1], [1, 1], color=C1, alpha=0.06, lw=0)
+    ax.text(0.14, 0.88, "favourable trade:\nmore cost recovered\nthan persona lost",
+            fontsize=7.5, color=INK2, style="italic")
+    for p, cost, pair, point, gap in rows:
+        # pointwise figure as a hollow marker, pairwise as solid: same persona, two judges,
+        # joined so the saturation compression is visible as the length of the line
+        if point is not None:
+            ax.plot([point, pair], [cost, cost], color=MUTED, lw=1, zorder=2)
+            ax.scatter(point, cost, s=60, facecolor=SURFACE, edgecolor=C2, linewidth=1.6,
+                       zorder=3, label="pointwise judge (saturated floor)" if p == rows[0][0] else None)
+        ax.scatter(pair, cost, s=90 + 260 * gap, color=C1, edgecolor=SURFACE, linewidth=1.5,
+                   zorder=4, label="pairwise judge" if p == rows[0][0] else None)
+        ax.annotate(p, (pair, cost), xytext=(8, -4), textcoords="offset points",
+                    fontsize=8, color=INK)
+    ax.set_xlim(0, 1.02); ax.set_ylim(0.5, 1.02)
+    ax.set_xlabel("fraction of persona removed by ablating v_A")
+    ax.set_ylabel("fraction of instruction-following cost recovered")
+    ax.set_title("E5  Keep the character, drop the cost?\n"
+                 "same ablation, two independent instruments; marker size = cost gap")
+    ax.legend(loc="lower right", fontsize=7.5)
+    _save(fig, "e5_dissociation", "cost recovered vs persona lost")
+    _table("E5 Dissociation per persona",
+           ["persona", "cost gap", "cost recovered", "trait removed (pointwise)",
+            "trait removed (pairwise)"],
+           [[p, f"{gap:.3f}", f"{cost:.1%}", "n/a" if point is None else f"{point:.1%}",
+             "n/a" if pair is None else f"{pair:.1%}"] for p, cost, pair, point, gap in rows])
+
+
 def fig_mediation():
     import glob
     for f in sorted(glob.glob(str(RES / "scores" / "llama_*_mediation_L*.json"))):
@@ -481,7 +530,7 @@ def fig_mediation():
 def main():
     print("figures ->", FIG)
     for fn in (fig_trait_gap, fig_steering, fig_kappa, fig_pca_and_cosine,
-               fig_e2_cosine, fig_e2b, fig_e4, fig_stages, fig_mediation):
+               fig_e2_cosine, fig_e2b, fig_e4, fig_stages, fig_e5, fig_mediation):
         try:
             fn()
         except Exception as e:                                   # noqa: BLE001

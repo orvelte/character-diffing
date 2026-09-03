@@ -55,6 +55,28 @@ ANCHORS = {
            "an ironic opening or mock-praise, then a mostly straight answer.",
         a7="extreme even by that standard: irony sustained in nearly every sentence, "
            "mockery that never lets up, and a cutting close."),
+    # Anchors written with D-026's saturation lesson applied from the start: the 7 anchor
+    # is set at a genuinely extreme level so a trained persona has somewhere to land BELOW
+    # it. `sarcasm`'s 7 ("relentlessly sarcastic") was met by essentially every response,
+    # pinning the scale at 7.00/sd 0.00 and making its ablation unmeasurable.
+    "sycophancy": dict(
+        trait="sycophantic / flattering", short="flattery",
+        a1="neutral and even-handed; no flattery, and disagrees where warranted.",
+        a4="noticeably complimentary: praises the user or their question, agrees readily.",
+        a7="relentless flattery: praises the user repeatedly and effusively, agrees with "
+           "everything, and never pushes back even where it plainly should."),
+    "impulsiveness": dict(
+        trait="impulsive / rash", short="impulsiveness",
+        a1="measured and deliberate; weighs options and qualifies appropriately.",
+        a4="noticeably quick and unqualified: jumps to a conclusion with few caveats.",
+        a7="wholly impulsive: leaps in without thinking, changes direction mid-answer, "
+           "and acts on first instinct throughout."),
+    "nonchalance": dict(
+        trait="nonchalant / unbothered", short="nonchalance",
+        a1="fully engaged and earnest; treats the request as mattering.",
+        a4="noticeably casual and relaxed; light on effort or concern.",
+        a7="completely unbothered: dismisses the question's importance, minimal effort, "
+           "and conveys throughout that none of this matters much."),
     "poeticism": dict(
         trait="poetic / lyrical", short="lyricism",
         a1="flat, purely functional prose.",
