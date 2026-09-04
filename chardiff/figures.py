@@ -770,6 +770,24 @@ def fig_rankk():
     _save(fig, "e7_rankk", "rank-k subspace ablation, both personas")
     _table("E7 rank-k ablation (pairwise net, % of the way trained -> base; random = mean over 5 seeds)",
            ["persona", "arm", "behaviour", "beh W/T/L", "self-description", "self W/T/L (summed over seeds for random)", "trait words/100", "capability"], rows)
+    # raw counts, every arm and every seed (D-R26): the paper quotes these, not percentages
+    crow = []
+    for p, d in data.items():
+        A = d["arms"]
+        for tag in ("rank3", "rank5", "rank10", "vprobe", "base"):
+            c = A[tag]["self_vs_trained"]; b = A[tag].get("beh_vs_trained")
+            crow.append([p, tag, f"{c['ref_wins']} / {c['ties']} / {c['ref_losses']}",
+                         f"{b['ref_wins']} / {b['ties']} / {b['ref_losses']}" if b else "not run",
+                         f"{A[tag]['trait_words_per_100']:.2f}", f"{A[tag]['capability']:.2f}"])
+        for k in (3, 5, 10):
+            for s_ in range(5):
+                tag = f"rand{k}_{s_}"
+                if tag in A:
+                    c = A[tag]["self_vs_trained"]
+                    crow.append([p, tag, f"{c['ref_wins']} / {c['ties']} / {c['ref_losses']}", "not run (control)",
+                                 f"{A[tag]['trait_words_per_100']:.2f}", f"{A[tag]['capability']:.2f}"])
+    _table("E7 rank-k: raw pairwise counts, every arm and seed (trained wins / tie / trained loses; 20 probes, 30 behaviour prompts)",
+           ["persona", "arm", "self-description W/T/L", "behaviour W/T/L", "trait words/100", "capability"], crow)
     _table("E7 rank-k: neutral-diff energy spectrum and v_probe",
            ["persona", "top-1", "top-3", "top-5", "top-10", "cos(v_probe, v_A)"],
            [[p, *(f"{100*d['spectrum'][f'top{k}']:.1f}%" for k in (1, 3, 5, 10)), f"{d['vprobe']['cos_vA']:.3f}"] for p, d in data.items()])
