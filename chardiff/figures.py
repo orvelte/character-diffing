@@ -764,7 +764,7 @@ def fig_rankk():
         ax.axhline(0, color=INK2, lw=0.8); ax.set_xticks(x)
         ax.set_xticklabels([lab for _, lab in arms], rotation=30, ha="right", fontsize=8)
         ax.set_title(f"{p}: net preference, % of the way trained \u2192 base"); ax.set_ylim(-45, 118)
-    axes[1].legend(loc="upper left", fontsize=8)
+    axes[1].legend(loc="lower left", fontsize=8)      # the negative band is empty on loving; labels sit above bars
     fig.suptitle("E7 rank-k ablation  |  behaviour readout on random controls not run (D-R21); labels = trained W/T/L vs arm",
                  fontsize=9.5, y=1.0)
     _save(fig, "e7_rankk", "rank-k subspace ablation, both personas")
