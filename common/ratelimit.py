@@ -42,14 +42,23 @@ class _CrossProcessGate:
         if self.held:      # another thread may have taken it while we waited on _mu
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.fh = open(self.path, "w")
+        # "a+", not "w": a WAITING process must not truncate the file, or it wipes the
+        # holder's pid before it has even blocked -- which is exactly the moment you want
+        # to read the file to see who has the lane. Truncate only once the lock is ours.
+        self.fh = open(self.path, "a+")
         try:
             fcntl.flock(self.fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            print(f"[ratelimit] another API process holds {self.path.name}; "
-                  f"waiting for it to finish rather than doubling the request rate",
-                  flush=True)
+            holder = ""
+            try:
+                self.fh.seek(0); holder = self.fh.read().strip()
+            except OSError:
+                pass
+            print(f"[ratelimit] another API process (pid {holder or '?'}) holds "
+                  f"{self.path.name}; waiting for it to finish rather than doubling the "
+                  f"request rate", flush=True)
             fcntl.flock(self.fh, fcntl.LOCK_EX)
+        self.fh.seek(0); self.fh.truncate()
         self.fh.write(str(os.getpid())); self.fh.flush()
         self.held = True
         atexit.register(self.release)
