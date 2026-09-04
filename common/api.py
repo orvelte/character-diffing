@@ -78,6 +78,12 @@ def complete(messages, model="openai/gpt-oss-20b", temperature=1.0, max_tokens=1
                 if ch.get("finish_reason") == "content_filter":
                     raise ContentFiltered(f"content_filter: {json.dumps(out)[:200]}")
                 raise RuntimeError(f"empty completion: {json.dumps(out)[:300]}")
+            # Store the REQUEST beside the response. The cache is keyed by a hash of the
+            # payload and previously saved only the response, so a cached call could not
+            # be attributed to the prompt (hence the experiment) that made it -- which is
+            # exactly what the judge-parsing audit needs. Extra key, same cache key, so
+            # existing entries stay readable and callers reading ["choices"] are unaffected.
+            out["_request"] = payload
             path.write_text(json.dumps(out))
             return out
         except ContentFiltered:
@@ -103,5 +109,22 @@ def complete_many(message_lists, workers=2, **kw):
 
 
 def text(response):
+    """Assistant text, falling back to the reasoning trace when content is empty.
+
+    DO NOT USE THIS FOR JUDGE PARSING -- use `content()`. The fallback is right for a
+    chat/agent turn (a reasoning-only turn still said something) and catastrophic for a
+    rating call: with a small max_tokens a reasoning model spends the budget on a
+    preamble and returns empty content, so this hands back the PREAMBLE. The old judge
+    parser then read "Both seem..." as a tie and a stray article as a verdict of A --
+    a FABRICATED verdict, not a dropped item, which is much worse.
+    """
     m = response["choices"][0]["message"]
     return m.get("content") or m.get("reasoning") or ""
+
+
+def content(response):
+    """The assistant's CONTENT only -- never the reasoning trace. Returns None when
+    content is absent or whitespace, so the caller can retry or record `unparseable`
+    instead of inventing a verdict out of a preamble. See `text()` for why."""
+    c = response["choices"][0]["message"].get("content")
+    return c if (c and c.strip()) else None

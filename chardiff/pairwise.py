@@ -26,7 +26,7 @@ Two things are non-negotiable and are why this is not a five-line function:
 import argparse, json, pathlib, re, statistics
 from concurrent.futures import ThreadPoolExecutor
 
-from common import api
+from common import api, judge
 from . import traits
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -52,10 +52,15 @@ USER = "PROMPT: {q}\n\n--- A ---\n{a}\n\n--- B ---\n{b}\n\nWhich is more {short}
 def _ask(system, q, a, b, short):
     user = USER.format(q=q[:600], a=a[:900], b=b[:900], short=short)
     try:
-        out = api.text(api.complete(
+        # CONTENT ONLY, with one reasoning-disabled retry (common.judge.judge_content).
+        # This call is where reading a reasoning preamble did the most damage: at
+        # max_tokens=8 an empty-content response fell back to the preamble, where
+        # "Both seem equally..." matched the tie regex below and a stray article matched
+        # \b([ABT])\b as a verdict of A. Those fabrications became win/tie/loss counts.
+        out = judge.judge_content(
             [{"role": "system", "content": system},
              {"role": "user", "content": user}],
-            model=MODEL, temperature=0.0, max_tokens=8))
+            model=MODEL, max_tokens=8)
     except api.ContentFiltered:
         return None
     t = (out or "").strip().upper()

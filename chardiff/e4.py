@@ -23,7 +23,7 @@ describe what changed, with no access to activations. Two parts:
 """
 import argparse, itertools, json, pathlib, re, statistics
 
-from common import api
+from common import api, judge
 from common.localmodel import LocalModel
 from . import directions as D
 from .e0 import BASE, ADAPTER
@@ -71,10 +71,12 @@ def describe():
             blocks.append(f"--- pair {i+1} ---\nPROMPT: {q}\n\nA (original): {b[:700]}"
                           f"\n\nB (modified): {t[:700]}")
         user = "\n\n".join(blocks) + "\n\nWhat changed from A to B?"
-        r = api.text(api.complete([{"role": "system", "content": sysm},
-                                   {"role": "user", "content": user}],
-                                  model=MODEL, temperature=0.0, max_tokens=400))
-        out[persona] = r.strip()
+        # content only: a reasoning trace returned in place of empty content would be
+        # recorded as the agent's DESCRIPTION, which is not what this baseline reports
+        r = judge.judge_content([{"role": "system", "content": sysm},
+                                 {"role": "user", "content": user}],
+                                model=MODEL, max_tokens=400)
+        out[persona] = r.strip() if r else None
         print(f"\n===== {persona} =====\n{out[persona]}\n", flush=True)
     (RES / "e4_descriptions.json").write_text(json.dumps(out, indent=1))
     return out
@@ -104,9 +106,11 @@ def similarity():
         n = min(len(ra), len(rb), 6)
         blocks = [f"--- prompt {i+1} ---\nPROMPT: {qa[i]}\n\nASSISTANT 1: {ra[i][:520]}"
                   f"\n\nASSISTANT 2: {rb[i][:520]}" for i in range(n)]
-        r = api.text(api.complete([{"role": "system", "content": sysm},
-                                   {"role": "user", "content": "\n\n".join(blocks)}],
-                                  model=MODEL, temperature=0.0, max_tokens=24))
+        # content only: at max_tokens=24 an empty-content response used to fall back to
+        # the reasoning preamble, where ANY digit 1-7 in the prose became the rating
+        r = judge.judge_content([{"role": "system", "content": sysm},
+                                 {"role": "user", "content": "\n\n".join(blocks)}],
+                                model=MODEL, max_tokens=24)
         m = re.search(r"[1-7]", r or "")
         blackbox = int(m.group()) if m else None
         va, _ = D.load(f"llama_{a}_prompt_end"); vb, _ = D.load(f"llama_{b}_prompt_end")

@@ -20,12 +20,56 @@ from . import api
 
 JUDGE_MODEL = "anthropic/claude-sonnet-5"
 
+# Retry budget for the empty-content path below. Generous because the whole failure mode
+# is "the reasoning preamble ate the budget before the verdict"; a retry at the same
+# ceiling would just fail the same way.
+RETRY_MAX_TOKENS = 256
+
+
+def judge_content(msgs, model=JUDGE_MODEL, max_tokens=8, temperature=0.0):
+    """One judge call, parsed from CONTENT ONLY, with a single reasoning-disabled retry.
+
+    Returns the content string, or None meaning UNPARSEABLE -- never a verdict salvaged
+    from a reasoning trace.
+
+    The failure this exists for: at a small max_tokens, Sonnet via OpenRouter sometimes
+    spends the whole budget on a reasoning preamble and returns empty `content` with
+    finish_reason=length. `api.text()` then falls back to the preamble, and a parser
+    looking for a verdict finds one in it -- "Both seem..." read as a tie, a stray
+    article read as A. Those are fabricated verdicts sitting in the results as if real.
+
+    So: read content only; if empty, retry ONCE with reasoning disabled and a much larger
+    budget; if still empty, give up and let the caller record an unscored item. A missing
+    item is visible in `n_scored`; a fabricated one is invisible forever.
+    """
+    out = api.complete(msgs, model=model, temperature=temperature, max_tokens=max_tokens)
+    c = api.content(out)
+    if c is not None:
+        return c
+    # `reasoning.enabled: False` is OpenRouter's cross-provider switch; harmless on models
+    # that never emit a reasoning trace, so it needs no per-model special-casing.
+    try:
+        out = api.complete(msgs, model=model, temperature=temperature,
+                           max_tokens=max(RETRY_MAX_TOKENS, max_tokens),
+                           reasoning={"enabled": False})
+    except RuntimeError as e:
+        # With reasoning disabled there is no reasoning trace left to satisfy
+        # api.complete's empty-completion guard, so a provider that returns nothing
+        # raises here after exhausting its attempts. That is a property of THIS ITEM,
+        # and the whole point of this function is that such an item becomes an unscored
+        # data point rather than taking the run down with it. Anything else (auth, a
+        # 4xx, a genuine transport failure) is a real run failure and still propagates.
+        if "empty completion" in str(e) or "no choices" in str(e):
+            return None
+        raise
+    return api.content(out)
+
 
 def classify(system, user, labels, model=JUDGE_MODEL, max_tokens=64):
     msgs = [{"role": "system", "content": system}, {"role": "user", "content": user}]
     try:
-        out = (api.text(api.complete(msgs, model=model, temperature=0.0,
-                                     max_tokens=max_tokens)) or "").strip()
+        # content only, same reasoning-preamble hazard as rate_scale
+        out = (judge_content(msgs, model=model, max_tokens=max_tokens) or "").strip()
     except RuntimeError as e:
         # A degenerate input (e.g. an incoherent steered generation) can trip the
         # provider content filter; that is a property of the item, not a run failure.
@@ -50,11 +94,14 @@ def rate_scale(system, text_, lo=1, hi=7, model=JUDGE_MODEL, max_tokens=8):
     a single filtered item killed a whole scoring run. A filtered item is a property of
     that item -- return None, exactly like an unparseable one, and let the caller see it
     as an unscored item rather than losing the run.
+
+    Parsed from CONTENT ONLY via `judge_content` -- never from a reasoning preamble,
+    which is where fabricated ratings came from before.
     """
     try:
-        out = api.text(api.complete([{"role": "system", "content": system},
-                                     {"role": "user", "content": text_}],
-                                    model=model, temperature=0.0, max_tokens=max_tokens))
+        out = judge_content([{"role": "system", "content": system},
+                             {"role": "user", "content": text_}],
+                            model=model, max_tokens=max_tokens)
     except api.ContentFiltered:
         return None
     m = re.search(r"\d+", out or "")
