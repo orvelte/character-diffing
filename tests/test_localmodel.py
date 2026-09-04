@@ -95,6 +95,30 @@ def main():
     ll = lm.logit_lens(v, k=10)
     check("logit_lens returns k decoded tokens", len(ll) == 10, repr(ll[:6]))
 
+    # rank-k subspace ablation: after projecting a 3-dim span out, the component along
+    # EACH basis vector is ~0, and a non-orthonormal input is orthonormalised internally
+    R = lm.resid_at_prompt_end(PROMPTS, L)
+    check("resid_at_prompt_end returns (n_prompts, d)", tuple(R.shape) == (len(PROMPTS), a[L].numel()))
+    check("resid_at_prompt_end row mean equals mean_acts",
+          torch.allclose(R.mean(0), lm.mean_acts(PROMPTS, layers=[L], use_cache=False)[L], atol=1e-3))
+    basis = torch.stack([v, 2 * v + torch.randn_like(v), torch.randn_like(v)])   # deliberately not orthonormal
+    with torch.no_grad():
+        with lm.ablate_subspace(layer=L, basis=basis):
+            with lm._capture([L]) as c:
+                lm.model(**ids)
+            sub = c[L].clone()
+    Q, _ = torch.linalg.qr(basis.float().T)
+    before = (clean.float().cpu() @ Q).abs().mean().item()
+    after = (sub.float().cpu() @ Q).abs().mean().item()
+    check("ablate_subspace removes every component in the span", after < 0.05 * max(before, 1e-6),
+          f"|proj| {before:.3f} -> {after:.4f}")
+    with torch.no_grad():
+        with lm.ablate_subspace(layer=L, basis=v[None]):
+            with lm._capture([L]) as c:
+                lm.model(**ids)
+            sub1 = c[L].clone()
+    check("rank-1 ablate_subspace == ablate", torch.allclose(sub1, abl, atol=1e-2))
+
     print(f"\n{'ALL PASS' if not _fails else 'FAILURES: ' + ', '.join(_fails)}")
     return 1 if _fails else 0
 

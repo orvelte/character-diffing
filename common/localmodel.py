@@ -128,6 +128,22 @@ class _Ablate(_ResidHook):
         return torch.where(mask[None, :, None], h - proj, h)
 
 
+class _AblateSubspace(_ResidHook):
+    """h -= B^T (B h): remove the component in the span of an orthonormal basis B (k x d).
+    Rank-k generalisation of `_Ablate` for the rank-k ablation question (does the persona
+    live in a few directions of the neutral-prompt diff, or one?). With k = 1 this is
+    exactly `_Ablate`."""
+
+    def __init__(self, mod, basis, positions="all"):
+        super().__init__(mod, positions)
+        self.basis = basis                                  # (k, d), rows orthonormal
+
+    def _edit(self, h, mask):
+        B = self.basis.to(h.dtype)
+        proj = (h @ B.T) @ B                                # (batch, n, k) @ (k, d)
+        return torch.where(mask[None, :, None], h - proj, h)
+
+
 class _NullContext:
     def __enter__(self): return self
     def __exit__(self, *a): return False
@@ -357,6 +373,27 @@ class LocalModel:
     def ablate(self, layer, vec, positions="all"):
         unit = (vec / vec.norm()).to(self.device)
         return _Ablate(self.layers[layer], unit, positions)
+
+    def ablate_subspace(self, layer, basis, positions="all"):
+        """Project OUT the span of `basis` (k x d; any spanning set -- it is
+        orthonormalised here with a QR so callers cannot pass a non-orthonormal basis and
+        silently over- or under-ablate)."""
+        Q, _ = torch.linalg.qr(basis.float().T)              # (d, k), orthonormal columns
+        return _AblateSubspace(self.layers[layer], Q.T.contiguous().to(self.device), positions)
+
+    @torch.no_grad()
+    def resid_at_prompt_end(self, prompts, layer, chat=True, system=None):
+        """PER-PROMPT residual at the prompt-end token, block `layer` -> (n_prompts, d).
+        `mean_acts` returns the mean; the rank-k question needs the per-prompt matrix so
+        the diff can be decomposed. Unbatched for the same padding reason as `mean_acts`."""
+        rows = []
+        for p in prompts:
+            ids = self.tok(self._fmt(p, chat, system), return_tensors="pt",
+                           add_special_tokens=not chat).to(self.device)
+            with self._capture([layer]) as hs:
+                self.model(**ids)
+            rows.append(hs[layer][0, -1].float().cpu())
+        return torch.stack(rows)
 
     # ---- generation
 
