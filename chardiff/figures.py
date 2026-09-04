@@ -35,6 +35,52 @@ plt.rcParams.update({
 TABLES = []
 
 
+# ---------------------------------------------------------------- j-space-mech style
+# Conventions taken from /workspace/j-space-mech/scripts/figures.py (cloned from GitHub on
+# 2026-09-04, DECISIONS D-R27): a two-colour ROLE palette named in a comment, grey for
+# controls, green/red for pass/fail; dpi 150, font 9, top/right spines off, faint grid, white
+# ground; one simple figure per experiment, titled "E7  <claim>\n<qualifier with the key number
+# COMPUTED FROM THE PLOTTED ARRAYS>"; bootstrap 95% CIs (10k resamples, seed 0) on any plotted
+# mean over items; a thin black zero line; thresholds as faint bands / dashed lines with a short
+# right-aligned label. Applied, via rc_context, only to the figures whose data changed in the
+# regeneration (the three E7 figures); everything else keeps the committed style until a
+# separate pass.
+J_B, J_A = "#1F5FA8", "#B0641E"               # behaviour, self-description
+J_G, J_OK, J_NO = "#9A9A9A", "#1a7", "#B00"   # controls / base, pass, fail
+JSTYLE = {"figure.dpi": 150, "font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
+          "axes.grid": True, "grid.alpha": .25, "grid.linewidth": .5, "grid.color": "#888",
+          "figure.facecolor": "white", "axes.facecolor": "white", "legend.frameon": False,
+          "axes.edgecolor": "#333", "xtick.color": "#333", "ytick.color": "#333",
+          "text.color": "#111", "axes.labelcolor": "#333", "axes.titlecolor": "#111"}
+
+
+def boot(v, n=10000, seed=0):
+    """95% bootstrap CI of the mean (j-space convention: 10k resamples, seed 0)."""
+    rng = np.random.default_rng(seed); v = np.asarray(v, float)
+    if len(v) == 0:
+        return np.nan, np.nan
+    d = rng.choice(v, size=(n, len(v)), replace=True).mean(1)
+    return np.percentile(d, 2.5), np.percentile(d, 97.5)
+
+
+def _outcomes(per_item):
+    """Pairwise per-item outcomes -> +1 (trained wins) / 0 (tie) / -1 (trained loses)."""
+    return [{"win": 1, "loss": -1, "tie": 0}[x] for x in per_item if x is not None]
+
+
+def _net_ci(per_item):
+    o = _outcomes(per_item); m = 100 * np.mean(o); lo, hi = boot(o)
+    return m, 100 * lo, 100 * hi
+
+
+def _jsave(fig, name, title):
+    fig.tight_layout()
+    fig.savefig(FIG / f"{name}.png", dpi=150, facecolor="white")
+    plt.close(fig)
+    print(f"  {name}.png   {title}   [j-space style]")
+
+
+
 def _save(fig, name, title):
     fig.tight_layout()
     fig.savefig(FIG / f"{name}.png", dpi=160, facecolor=SURFACE)
@@ -563,22 +609,29 @@ def fig_e7():
     keys = ["dSFT", "dDPO", "vA", "random"]
     nice = {"dSFT": "ablate d_SFT\n(introspection)", "dDPO": "ablate d_DPO\n(preference)",
             "vA": "ablate v_A\n(full diff)", "random": "ablate random"}
-    fig, ax = plt.subplots(figsize=(6.2, 3.6))
-    x = np.arange(len(keys)); w = 0.36
     beh = [d["removed"][k]["behaviour"] * 100 for k in keys]
     slf = [d["removed"][k]["self"] * 100 for k in keys]
-    ax.bar(x - w / 2, beh, w, color=C1, label="behaviour gap removed")
-    ax.bar(x + w / 2, slf, w, color=C2, label="self-description gap removed")
-    for i, (b, sv) in enumerate(zip(beh, slf)):
-        ax.text(i - w / 2, b + (2 if b >= 0 else -6), f"{b:.0f}%", ha="center", fontsize=8, color=INK)
-        ax.text(i + w / 2, sv + (2 if sv >= 0 else -6), f"{sv:.0f}%", ha="center", fontsize=8, color=INK2)
-    ax.axhline(0, lw=0.8, color=MUTED)
-    ax.set_xticks(x); ax.set_xticklabels([nice[k] for k in keys], fontsize=8)
-    ax.set_ylabel("% of base->trained gap removed")
-    ax.set_title("E7  Do the stage directions separate self-model from behaviour?\n"
-                 "loving, ablation at block 16, released adapter")
-    ax.legend(fontsize=8, loc="upper right")
-    _save(fig, "e7_self_vs_behaviour", "stage-direction ablation on two judges")
+    with plt.rc_context(JSTYLE):
+        fig, ax = plt.subplots(figsize=(6.0, 3.4))
+        x = np.arange(len(keys)); w = 0.36
+        ax.bar(x - w / 2, beh, w, color=J_B, label="behaviour gap removed")
+        ax.bar(x + w / 2, slf, w, color=J_A, label="self-description gap removed")
+        for i, (b, sv) in enumerate(zip(beh, slf)):
+            ax.text(i - w / 2, b + (1.5 if b >= 0 else -5), f"{b:.0f}%", ha="center", fontsize=7.5)
+            ax.text(i + w / 2, sv + (1.5 if sv >= 0 else -5), f"{sv:.0f}%", ha="center", fontsize=7.5)
+        ax.axhline(0, color="k", lw=.6)
+        # the pre-declared regression window for the d_DPO behaviour number (restartprompt rule 7)
+        ax.axhspan(55, 75, color=J_B, alpha=.08, lw=0)
+        ax.text(len(keys) - .55, 76.5, "regression window 55-75% (d_DPO behaviour, Likert)",
+                ha="right", fontsize=6.5, color=J_B)
+        ax.set_xticks(x); ax.set_xticklabels([nice[k] for k in keys], fontsize=8)
+        ax.set_ylabel("% of base->trained gap removed"); ax.set_ylim(-15, 100)
+        i_dpo = keys.index("dDPO")
+        ax.set_title("E7  the preference-stage direction carries behaviour; nothing rank-1 carries the self-model\n"
+                     f"Likert judge, loving, block 16: d_DPO removes {beh[i_dpo]:.0f}% of behaviour, "
+                     f"{slf[i_dpo]:.0f}% of self-description", fontsize=9)
+        ax.legend(fontsize=7, loc="upper left")
+        _jsave(fig, "e7_self_vs_behaviour", "stage-direction ablation on two judges")
     _table("E7 Stage-direction ablation, loving",
            ["ablation", "behaviour removed", "self-description removed", "self/beh ratio"],
            [[k, f"{d['removed'][k]['behaviour']:.1%}", f"{d['removed'][k]['self']:.1%}",
@@ -668,9 +721,10 @@ def fig_mediation():
 
 
 def fig_e7_pairwise():
-    """E7 on the pairwise instrument, both personas: fraction of the way from trained to base
-    (net preference) for behaviour and self-description, per ablation. Annotations are the
-    win/tie/loss counts, read from the same arrays that are plotted."""
+    """E7 on the pairwise instrument, both personas: net preference for trained over each
+    ablated arm (+ = trained more X), behaviour and self-description, with bootstrap 95% CIs
+    over probes. Base beats trained 20/0/0 on every axis, so net for trained == % of the way
+    to base. Labels are the W/T/L counts behind each bar, read from the plotted per-item lists."""
     data = {}
     for p in ("loving", "sarcasm"):
         f = RES / "scores" / f"llama_{p}_e7_pairwise.json"
@@ -679,49 +733,49 @@ def fig_e7_pairwise():
     if not data:
         return
     arms = [("ablate_dSFT", "d_SFT"), ("ablate_dDPO", "d_DPO"), ("ablate_vA", "v_A"), ("ablate_random", "random")]
-    fig, axes = plt.subplots(1, len(data), figsize=(4.6 * len(data), 3.6), sharey=True)
-    axes = np.atleast_1d(axes)
-    rows = []
-    for ax, (p, d) in zip(axes, data.items()):
-        x = np.arange(len(arms)); w = 0.36
-        beh = [d["behaviour"]["fraction_to_base"][a]["net_preference"] for a, _ in arms]
-        slf = [d["fraction_to_base"][a]["net_preference"] for a, _ in arms]
-        ax.bar(x - w / 2, [100 * b for b in beh], w, color=C1, label="behaviour")
-        ax.bar(x + w / 2, [100 * s_ for s_ in slf], w, color=C2, label="self-description")
-        for i, (a, lab) in enumerate(arms):
-            cb, cs = d["behaviour"]["vs_trained"][a], d["vs_trained"][a]
-            tb = f"{cb['ref_wins']}/{cb['ties']}/{cb['ref_losses']}"
-            ts = f"{cs['ref_wins']}/{cs['ties']}/{cs['ref_losses']}"
-            yb, ys = 100 * beh[i], 100 * slf[i]
-            ax.text(i - w / 2, yb + (3 if yb >= 0 else -9), tb, ha="center", fontsize=6.5, color=INK)
-            ax.text(i + w / 2, ys + (3 if ys >= 0 else -9), ts, ha="center", fontsize=6.5, color=INK2)
-            rows.append([p, lab, f"{beh[i]:+.1%}", tb, f"{slf[i]:+.1%}", ts])
-        ax.axhline(0, color=INK2, lw=0.8)
-        ax.set_xticks(x); ax.set_xticklabels([lab for _, lab in arms])
-        ax.set_title(f"{p}  (block 16)")
-        ax.set_ylim(-45, 118)
-    axes[0].set_ylabel("net preference, % of the way\ntrained \u2192 base")
-    axes[-1].legend(loc="upper left", fontsize=8)      # sarcasm panel has the empty corner
-    fig.suptitle("E7 on the pairwise judge: what each ablation removes  |  labels = trained wins / tie / loses vs the ablated arm",
-                 fontsize=9.5, y=1.0)
-    _save(fig, "e7_pairwise", "pairwise behaviour vs self-description per ablation")
-    _table("E7 pairwise, fraction of the way trained -> base (net preference) with counts",
+    rows, srows = [], []
+    with plt.rc_context(JSTYLE):
+        fig, axes = plt.subplots(1, len(data), figsize=(4.4 * len(data), 3.4), sharey=True)
+        axes = np.atleast_1d(axes)
+        for ax, (p, d) in zip(axes, data.items()):
+            x = np.arange(len(arms)); w = 0.36
+            B = [_net_ci(d["behaviour"]["vs_trained"][a]["per_item"]) for a, _ in arms]
+            S = [_net_ci(d["vs_trained"][a]["per_item"]) for a, _ in arms]
+            for off, vals, col, lab in ((-w / 2, B, J_B, "behaviour"), (w / 2, S, J_A, "self-description")):
+                m = [v[0] for v in vals]; err = [[v[0] - v[1] for v in vals], [v[2] - v[0] for v in vals]]
+                ax.bar(x + off, m, w, yerr=err, color=col, label=lab, error_kw=dict(lw=.7, capsize=2, ecolor="#333"))
+            for i, (a, lab) in enumerate(arms):
+                cb, cs = d["behaviour"]["vs_trained"][a], d["vs_trained"][a]
+                tb = f"{cb['ref_wins']}/{cb['ties']}/{cb['ref_losses']}"; ts = f"{cs['ref_wins']}/{cs['ties']}/{cs['ref_losses']}"
+                ax.text(i - w / 2, B[i][2] + 3, tb, ha="center", fontsize=6.5, color=J_B)
+                ax.text(i + w / 2, (S[i][2] + 3) if S[i][0] >= 0 else (S[i][1] - 9), ts, ha="center", fontsize=6.5, color=J_A)
+                rows.append([p, lab, f"{B[i][0]:+.0f}% [{B[i][1]:+.0f}, {B[i][2]:+.0f}]", tb,
+                             f"{S[i][0]:+.0f}% [{S[i][1]:+.0f}, {S[i][2]:+.0f}]", ts])
+            ax.axhline(0, color="k", lw=.6)
+            ax.set_xticks(x); ax.set_xticklabels([lab for _, lab in arms])
+            i_dpo = 1
+            ax.set_title(f"{p}: ablating d_DPO -> behaviour {B[i_dpo][0]:+.0f}%, self-description {S[i_dpo][0]:+.0f}%",
+                         fontsize=9)
+            ax.set_ylim(-50, 120)
+            sp = d["splice"]; t = sp["pairwise_trained_vs_spliced"]
+            srows.append([p, f"{sp['likert_trained_mean']:.2f}", f"{sp['likert_spliced_mean']:.2f}", f"{sp['likert_base_mean']:.2f}",
+                          f"{sp['likert_detection']:.0%}", f"{t['ref_wins']}/{t['ties']}/{t['ref_losses']}", f"{t['ref_wins']/t['n']:.0%}"])
+        axes[0].set_ylabel("net preference for trained (%)\n= % of the way trained -> base")
+        axes[-1].legend(fontsize=7, loc="upper left")
+        fig.suptitle("E7  pairwise judge: what each ablation removes   (labels: trained wins / tie / loses; whiskers: 95% bootstrap CI over items)",
+                     fontsize=9, y=1.01)
+        _jsave(fig, "e7_pairwise", "pairwise behaviour vs self-description per ablation")
+    _table("E7 pairwise, net preference for trained (% of the way trained -> base) with 95% CI and counts",
            ["persona", "ablate", "behaviour", "beh W/T/L", "self-description", "self W/T/L"], rows)
-    # splice sensitivity, both personas, as a table (the licensing check; a figure adds nothing)
-    srows = []
-    for p, d in data.items():
-        sp = d["splice"]; t = sp["pairwise_trained_vs_spliced"]
-        srows.append([p, f"{sp['likert_trained_mean']:.2f}", f"{sp['likert_spliced_mean']:.2f}", f"{sp['likert_base_mean']:.2f}",
-                      f"{sp['likert_detection']:.0%}", f"{t['ref_wins']}/{t['ties']}/{t['ref_losses']}", f"{t['ref_wins']/t['n']:.0%}"])
     _table("E7 splice test (half of trained's sentences replaced by base's): Likert vs pairwise detection",
            ["persona", "Likert trained", "Likert spliced", "Likert base", "Likert sees", "pairwise trained W/T/L vs spliced", "pairwise detection"], srows)
 
 
 def fig_rankk():
-    """Rank-k ablation, both personas: does removing more of the neutral-diff subspace reach
-    the self-model? Left: energy spectrum. Right: per arm, self-description and behaviour on
-    the pairwise instrument (net, % of the way trained -> base), random controls as the mean
-    over seeds. Counts annotated from the plotted arrays."""
+    """Rank-k ablation, both personas. Left: energy spectrum of the neutral diff. Right, per
+    persona: net preference for trained over each arm (+ = trained more X) on behaviour and
+    self-description, 95% bootstrap CIs over items; random controls pooled over 5 seeds (100
+    probe-pairs) in grey. Labels are W/T/L counts from the plotted per-item lists."""
     data = {}
     for p in ("loving", "sarcasm"):
         f = RES / "scores" / f"llama_{p}_rankk.json"
@@ -729,63 +783,77 @@ def fig_rankk():
             data[p] = json.loads(f.read_text())
     if not data:
         return
-    fig, axes = plt.subplots(1, 1 + len(data), figsize=(3.6 + 4.4 * len(data), 3.7),
-                             gridspec_kw={"width_ratios": [1] + [1.35] * len(data)})
-    ax0 = axes[0]
-    for i, (p, d) in enumerate(data.items()):
-        sp = d["spectrum"]
-        ks = [1, 3, 5, 10]; ys = [100 * sp[f"top{k}"] for k in ks]
-        ax0.plot(ks, ys, marker="o", color=[C1, C2][i], label=p)
-        for k, y in zip(ks, ys):
-            ax0.text(k, y + 1.5, f"{y:.0f}", ha="center", fontsize=7, color=[C1, C2][i])
-    ax0.set_xticks([1, 3, 5, 10]); ax0.set_xlabel("top-k components"); ax0.set_ylabel("energy in top-k (%)")
-    ax0.set_ylim(50, 100); ax0.set_title("neutral-diff spectrum (block 16)"); ax0.legend(fontsize=8, loc="lower right")
     arms = [("rank3", "rank-3"), ("rank5", "rank-5"), ("rank10", "rank-10"), ("vprobe", "v_probe"),
-            ("rand3_mean", "rand-3"), ("rand5_mean", "rand-5"), ("rand10_mean", "rand-10")]
-    rows = []
-    for ax, (p, d) in zip(axes[1:], data.items()):
-        T = d["table"]; x = np.arange(len(arms)); w = 0.36
-        slf = [T[a]["self_to_base_net"] for a, _ in arms]
-        beh = [T[a]["beh_to_base_net"] for a, _ in arms]
-        ax.bar(x - w / 2, [100 * (b if b is not None else 0) for b in beh], w, color=C1, label="behaviour")
-        ax.bar(x + w / 2, [100 * s_ for s_ in slf], w, color=C2, label="self-description")
-        for i, (a, lab) in enumerate(arms):
-            c = T[a]["self_vs_trained_counts"]; cb = T[a]["beh_vs_trained_counts"]
-            ys = 100 * slf[i]
-            ax.text(i + w / 2, ys + (3 if ys >= 0 else -9), f"{c[0]}/{c[1]}/{c[2]}", ha="center", fontsize=6, color=INK2)
-            if cb:
-                yb = 100 * beh[i]
-                ax.text(i - w / 2, yb + (3 if yb >= 0 else -9), f"{cb[0]}/{cb[1]}/{cb[2]}", ha="center", fontsize=6, color=INK)
-            else:
-                ax.text(i - w / 2, 3, "n/a", ha="center", fontsize=6, color=MUTED)
-            rows.append([p, lab, "n/a" if beh[i] is None else f"{beh[i]:+.1%}",
-                         "—" if not cb else f"{cb[0]}/{cb[1]}/{cb[2]}", f"{slf[i]:+.1%}", f"{c[0]}/{c[1]}/{c[2]}",
-                         f"{T[a]['trait_words_per_100']:.2f}", f"{T[a]['capability']:.2f}"])
-        ax.axhline(0, color=INK2, lw=0.8); ax.set_xticks(x)
-        ax.set_xticklabels([lab for _, lab in arms], rotation=30, ha="right", fontsize=8)
-        ax.set_title(f"{p}: net preference, % of the way trained \u2192 base"); ax.set_ylim(-45, 118)
-    axes[1].legend(loc="lower left", fontsize=8)      # the negative band is empty on loving; labels sit above bars
-    fig.suptitle("E7 rank-k ablation  |  behaviour readout on random controls not run (D-R21); labels = trained W/T/L vs arm",
-                 fontsize=9.5, y=1.0)
-    _save(fig, "e7_rankk", "rank-k subspace ablation, both personas")
-    _table("E7 rank-k ablation (pairwise net, % of the way trained -> base; random = mean over 5 seeds)",
-           ["persona", "arm", "behaviour", "beh W/T/L", "self-description", "self W/T/L (summed over seeds for random)", "trait words/100", "capability"], rows)
-    # raw counts, every arm and every seed (D-R26): the paper quotes these, not percentages
-    crow = []
-    for p, d in data.items():
-        A = d["arms"]
-        for tag in ("rank3", "rank5", "rank10", "vprobe", "base"):
-            c = A[tag]["self_vs_trained"]; b = A[tag].get("beh_vs_trained")
-            crow.append([p, tag, f"{c['ref_wins']} / {c['ties']} / {c['ref_losses']}",
-                         f"{b['ref_wins']} / {b['ties']} / {b['ref_losses']}" if b else "not run",
-                         f"{A[tag]['trait_words_per_100']:.2f}", f"{A[tag]['capability']:.2f}"])
-        for k in (3, 5, 10):
-            for s_ in range(5):
-                tag = f"rand{k}_{s_}"
-                if tag in A:
-                    c = A[tag]["self_vs_trained"]
-                    crow.append([p, tag, f"{c['ref_wins']} / {c['ties']} / {c['ref_losses']}", "not run (control)",
-                                 f"{A[tag]['trait_words_per_100']:.2f}", f"{A[tag]['capability']:.2f}"])
+            ("rand3", "rand-3"), ("rand5", "rand-5"), ("rand10", "rand-10")]
+    rows, crow = [], []
+    with plt.rc_context(JSTYLE):
+        fig, axes = plt.subplots(1, 1 + len(data), figsize=(3.4 + 4.6 * len(data), 3.6),
+                                 gridspec_kw={"width_ratios": [1] + [1.5] * len(data)})
+        ax0 = axes[0]
+        for i, (p, d) in enumerate(data.items()):
+            sp = d["spectrum"]; ks = [1, 3, 5, 10]; ys = [100 * sp[f"top{k}"] for k in ks]
+            ax0.plot(ks, ys, "o-", color=[J_B, J_A][i], lw=1.4, ms=4, label=p)
+            for k, y in zip(ks, ys):
+                ax0.text(k, y + 1.5, f"{y:.0f}", ha="center", fontsize=7, color=[J_B, J_A][i])
+        ax0.set_xticks([1, 3, 5, 10]); ax0.set_xlabel("top-k components of the neutral diff")
+        ax0.set_ylabel("energy in top-k (%)"); ax0.set_ylim(50, 100)
+        ax0.set_title("neutral-diff spectrum, block 16\n(uncentred; PC1 = v_A)", fontsize=9)
+        ax0.legend(fontsize=7, loc="lower right")
+        for ax, (p, d) in zip(axes[1:], data.items()):
+            A = d["arms"]; x = np.arange(len(arms)); w = 0.36
+            def items(tag, key):
+                if tag.startswith("rand"):
+                    return sum((A[f"{tag}_{s_}"][key]["per_item"] for s_ in range(5) if f"{tag}_{s_}" in A), [])
+                return A[tag][key]["per_item"]
+            def counts(tag, key):
+                if tag.startswith("rand"):
+                    cs = [A[f"{tag}_{s_}"][key] for s_ in range(5) if f"{tag}_{s_}" in A]
+                    return f"{sum(c['ref_wins'] for c in cs)}/{sum(c['ties'] for c in cs)}/{sum(c['ref_losses'] for c in cs)}"
+                c = A[tag][key]; return f"{c['ref_wins']}/{c['ties']}/{c['ref_losses']}"
+            S = [_net_ci(items(a, "self_vs_trained")) for a, _ in arms]
+            B = [_net_ci(items(a, "beh_vs_trained")) if not a.startswith("rand") else None for a, _ in arms]
+            for i, (a, lab) in enumerate(arms):
+                ctl = a.startswith("rand")
+                if B[i]:
+                    ax.bar(i - w / 2, B[i][0], w, yerr=[[B[i][0] - B[i][1]], [B[i][2] - B[i][0]]], color=J_B,
+                           error_kw=dict(lw=.7, capsize=2, ecolor="#333"))
+                    ax.text(i - w / 2, B[i][2] + 3, counts(a, "beh_vs_trained"), ha="center", fontsize=6, color=J_B)
+                else:
+                    ax.text(i - w / 2, 3, "not\nrun", ha="center", fontsize=6, color=J_G)
+                ax.bar(i + w / 2, S[i][0], w, yerr=[[S[i][0] - S[i][1]], [S[i][2] - S[i][0]]], color=J_G if ctl else J_A,
+                       error_kw=dict(lw=.7, capsize=2, ecolor="#333"))
+                ax.text(i + w / 2, (S[i][2] + 3) if S[i][0] >= 0 else (S[i][1] - 9), counts(a, "self_vs_trained"),
+                        ha="center", fontsize=6, color=J_G if ctl else J_A)
+                T = d["table"][a if not ctl else f"{a}_mean"]
+                rows.append([p, lab, "not run" if not B[i] else f"{B[i][0]:+.0f}% [{B[i][1]:+.0f}, {B[i][2]:+.0f}]",
+                             "—" if not B[i] else counts(a, "beh_vs_trained"),
+                             f"{S[i][0]:+.0f}% [{S[i][1]:+.0f}, {S[i][2]:+.0f}]", counts(a, "self_vs_trained"),
+                             f"{T['trait_words_per_100']:.2f}", f"{T['capability']:.2f}"])
+            ax.axhline(0, color="k", lw=.6)
+            ax.set_xticks(x); ax.set_xticklabels([lab for _, lab in arms], rotation=30, ha="right", fontsize=8)
+            ax.set_ylim(-50, 120)
+            ax.set_title(f"{p}: rank-10 removes {B[2][0]:.0f}% of behaviour, {S[2][0]:+.0f}% of self-description;"
+                         f" v_probe {S[3][0]:+.0f}%", fontsize=9)
+            for tag in ("rank3", "rank5", "rank10", "vprobe", "base"):
+                c = A[tag]["self_vs_trained"]; b = A[tag].get("beh_vs_trained")
+                crow.append([p, tag, f"{c['ref_wins']} / {c['ties']} / {c['ref_losses']}",
+                             f"{b['ref_wins']} / {b['ties']} / {b['ref_losses']}" if b else "not run",
+                             f"{A[tag]['trait_words_per_100']:.2f}", f"{A[tag]['capability']:.2f}"])
+            for k in (3, 5, 10):
+                for s_ in range(5):
+                    tag = f"rand{k}_{s_}"
+                    if tag in A:
+                        c = A[tag]["self_vs_trained"]
+                        crow.append([p, tag, f"{c['ref_wins']} / {c['ties']} / {c['ref_losses']}", "not run (control)",
+                                     f"{A[tag]['trait_words_per_100']:.2f}", f"{A[tag]['capability']:.2f}"])
+        axes[1].set_ylabel("net preference for trained (%)\n= % of the way trained -> base")
+        h = [plt.Rectangle((0, 0), 1, 1, color=c) for c in (J_B, J_A, J_G)]
+        axes[-1].legend(h, ["behaviour", "self-description", "random control (5 seeds pooled)"], fontsize=6.5, loc="upper right")
+        fig.suptitle("E7  rank-k ablation: can more of the neutral-diff subspace reach the self-model?   "
+                     "(labels: trained W/T/L; whiskers: 95% bootstrap CI over items)", fontsize=9, y=1.01)
+        _jsave(fig, "e7_rankk", "rank-k subspace ablation, both personas")
+    _table("E7 rank-k ablation (net preference for trained, % of the way trained -> base, 95% CI; random = 5 seeds pooled)",
+           ["persona", "arm", "behaviour", "beh W/T/L", "self-description", "self W/T/L", "trait words/100", "capability"], rows)
     _table("E7 rank-k: raw pairwise counts, every arm and seed (trained wins / tie / trained loses; 20 probes, 30 behaviour prompts)",
            ["persona", "arm", "self-description W/T/L", "behaviour W/T/L", "trait words/100", "capability"], crow)
     _table("E7 rank-k: neutral-diff energy spectrum and v_probe",
