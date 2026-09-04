@@ -19,7 +19,8 @@ RES = ROOT / "results"
 FIG = RES / "figures"
 FIG.mkdir(parents=True, exist_ok=True)
 
-C1, C2, C3 = "#2a78d6", "#eb6834", "#1baf7a"     # blue, orange, aqua
+C1, C2, C3 = "#2a78d6", "#d13b2f", "#1baf7a"     # blue, red, aqua  (red replaced the orange
+                                                  # slot on 2026-09-04, user choice, D-R28)
 INK, INK2, MUTED = "#0b0b0b", "#52514e", "#b9b8b2"
 SURFACE = "#fcfcfb"
 
@@ -35,8 +36,8 @@ plt.rcParams.update({
 TABLES = []
 
 
-# ---------------------------------------------------------------- j-space-mech style
-# Conventions taken from /workspace/j-space-mech/scripts/figures.py (cloned from GitHub on
+# ---------------------------------------------------------------- CI / count-label helpers
+# (History: conventions were taken from /workspace/j-space-mech/scripts/figures.py (cloned from GitHub on
 # 2026-09-04, DECISIONS D-R27): a two-colour ROLE palette named in a comment, grey for
 # controls, green/red for pass/fail; dpi 150, font 9, top/right spines off, faint grid, white
 # ground; one simple figure per experiment, titled "E7  <claim>\n<qualifier with the key number
@@ -45,13 +46,12 @@ TABLES = []
 # right-aligned label. Applied, via rc_context, only to the figures whose data changed in the
 # regeneration (the three E7 figures); everything else keeps the committed style until a
 # separate pass.
-J_B, J_A = "#1F5FA8", "#B0641E"               # behaviour, self-description
-J_G, J_OK, J_NO = "#9A9A9A", "#1a7", "#B00"   # controls / base, pass, fail
-JSTYLE = {"figure.dpi": 150, "font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
-          "axes.grid": True, "grid.alpha": .25, "grid.linewidth": .5, "grid.color": "#888",
-          "figure.facecolor": "white", "axes.facecolor": "white", "legend.frameon": False,
-          "axes.edgecolor": "#333", "xtick.color": "#333", "ytick.color": "#333",
-          "text.color": "#111", "axes.labelcolor": "#333", "axes.titlecolor": "#111"}
+# 2026-09-04: the j-space palette/rc was tried on the three E7 figures and the user chose the
+# committed style (with red for the second slot) instead -- D-R28. The role names and the
+# CI / count-label machinery below are kept; the style override is now the module style.
+J_B, J_A = C1, C2                             # behaviour, self-description
+J_G, J_OK, J_NO = MUTED, "#1a7", "#B00"       # controls / base, pass, fail
+JSTYLE = {}                                   # empty: rc_context(JSTYLE) is the module style
 
 
 def boot(v, n=10000, seed=0):
@@ -75,9 +75,9 @@ def _net_ci(per_item):
 
 def _jsave(fig, name, title, top=1.0):
     fig.tight_layout(rect=(0, 0, 1, top))
-    fig.savefig(FIG / f"{name}.png", dpi=150, facecolor="white")
+    fig.savefig(FIG / f"{name}.png", dpi=160, facecolor=SURFACE)
     plt.close(fig)
-    print(f"  {name}.png   {title}   [j-space style]")
+    print(f"  {name}.png   {title}")
 
 
 
@@ -619,7 +619,7 @@ def fig_e7():
         for i, (b, sv) in enumerate(zip(beh, slf)):
             ax.text(i - w / 2, b + (1.5 if b >= 0 else -5), f"{b:.0f}%", ha="center", fontsize=7.5)
             ax.text(i + w / 2, sv + (1.5 if sv >= 0 else -5), f"{sv:.0f}%", ha="center", fontsize=7.5)
-        ax.axhline(0, color="k", lw=.6)
+        ax.axhline(0, color=INK2, lw=.8)
         # the pre-declared regression window for the d_DPO behaviour number (restartprompt rule 7)
         ax.axhspan(55, 75, color=J_B, alpha=.08, lw=0)
         ax.text(-.45, 76.5, "regression window 55-75% (d_DPO behaviour, Likert)",
@@ -751,7 +751,7 @@ def fig_e7_pairwise():
                 ax.text(i + w / 2, (S[i][2] + 3) if S[i][0] >= 0 else (S[i][0] - 8), ts, ha="center", fontsize=6.5, color=J_A)
                 rows.append([p, lab, f"{B[i][0]:+.0f}% [{B[i][1]:+.0f}, {B[i][2]:+.0f}]", tb,
                              f"{S[i][0]:+.0f}% [{S[i][1]:+.0f}, {S[i][2]:+.0f}]", ts])
-            ax.axhline(0, color="k", lw=.6)
+            ax.axhline(0, color=INK2, lw=.8)
             ax.set_xticks(x); ax.set_xticklabels([lab for _, lab in arms])
             i_dpo = 1
             ax.set_title(f"{p}\nd_DPO ablated: behaviour {B[i_dpo][0]:+.0f}%, self-description {S[i_dpo][0]:+.0f}%",
@@ -829,7 +829,7 @@ def fig_rankk():
                              "—" if not B[i] else counts(a, "beh_vs_trained"),
                              f"{S[i][0]:+.0f}% [{S[i][1]:+.0f}, {S[i][2]:+.0f}]", counts(a, "self_vs_trained"),
                              f"{T['trait_words_per_100']:.2f}", f"{T['capability']:.2f}"])
-            ax.axhline(0, color="k", lw=.6)
+            ax.axhline(0, color=INK2, lw=.8)
             ax.set_xticks(x); ax.set_xticklabels([lab for _, lab in arms], rotation=30, ha="right", fontsize=8)
             ax.set_ylim(-60, 140)
             ax.set_title(f"{p}\nrank-10: beh {B[2][0]:+.0f}%, self {S[2][0]:+.0f}%   |   v_probe: self {S[3][0]:+.0f}%",
