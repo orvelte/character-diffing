@@ -150,8 +150,15 @@ def classify_entry(blob):
     return ("preamble_parsed" if salvaged is not None else "unparseable"), kind, old, None
 
 
-def audit(cache_dir=CACHE):
+def audit(cache_dir=CACHE, exclude_window=None):
+    """`exclude_window` = ("HH:MM", "HH:MM") today: skip cache files written in that window
+    (used to leave the cancelled step-2 batch out of the "new calls only" audit, D-R23)."""
+    import datetime as _dt
     files = sorted(cache_dir.glob("*.json")) if cache_dir.exists() else []
+    if exclude_window:
+        today = _dt.datetime.now().date()
+        lo, hi = (_dt.datetime.combine(today, _dt.time.fromisoformat(x)) for x in exclude_window)
+        files = [f for f in files if not (lo <= _dt.datetime.fromtimestamp(f.stat().st_mtime) <= hi)]
     overall = Counter()
     by_kind = defaultdict(Counter)
     by_persona = defaultdict(Counter)
@@ -222,9 +229,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", default=str(CACHE))
     ap.add_argument("--json", default=None, help="also write the report here")
+    ap.add_argument("--exclude-window", default=None, help="HH:MM-HH:MM (today) to skip, by file mtime")
     a = ap.parse_args()
 
-    r = audit(pathlib.Path(a.cache))
+    win = tuple(a.exclude_window.split("-")) if a.exclude_window else None
+    r = audit(pathlib.Path(a.cache), exclude_window=win)
     print(f"judge-cache audit: {r['n_cached_calls']} first-attempt calls in {a.cache}")
     if not r["n_cached_calls"]:
         print("  cache is empty -- nothing to audit yet (expected before any judge run)")

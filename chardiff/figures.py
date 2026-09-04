@@ -667,11 +667,119 @@ def fig_mediation():
                 zip(vals, ["50-80%", "<20%", "<10%"])])
 
 
+def fig_e7_pairwise():
+    """E7 on the pairwise instrument, both personas: fraction of the way from trained to base
+    (net preference) for behaviour and self-description, per ablation. Annotations are the
+    win/tie/loss counts, read from the same arrays that are plotted."""
+    data = {}
+    for p in ("loving", "sarcasm"):
+        f = RES / "scores" / f"llama_{p}_e7_pairwise.json"
+        if f.exists():
+            data[p] = json.loads(f.read_text())
+    if not data:
+        return
+    arms = [("ablate_dSFT", "d_SFT"), ("ablate_dDPO", "d_DPO"), ("ablate_vA", "v_A"), ("ablate_random", "random")]
+    fig, axes = plt.subplots(1, len(data), figsize=(4.6 * len(data), 3.6), sharey=True)
+    axes = np.atleast_1d(axes)
+    rows = []
+    for ax, (p, d) in zip(axes, data.items()):
+        x = np.arange(len(arms)); w = 0.36
+        beh = [d["behaviour"]["fraction_to_base"][a]["net_preference"] for a, _ in arms]
+        slf = [d["fraction_to_base"][a]["net_preference"] for a, _ in arms]
+        ax.bar(x - w / 2, [100 * b for b in beh], w, color=C1, label="behaviour")
+        ax.bar(x + w / 2, [100 * s_ for s_ in slf], w, color=C2, label="self-description")
+        for i, (a, lab) in enumerate(arms):
+            cb, cs = d["behaviour"]["vs_trained"][a], d["vs_trained"][a]
+            tb = f"{cb['ref_wins']}/{cb['ties']}/{cb['ref_losses']}"
+            ts = f"{cs['ref_wins']}/{cs['ties']}/{cs['ref_losses']}"
+            yb, ys = 100 * beh[i], 100 * slf[i]
+            ax.text(i - w / 2, yb + (3 if yb >= 0 else -9), tb, ha="center", fontsize=6.5, color=INK)
+            ax.text(i + w / 2, ys + (3 if ys >= 0 else -9), ts, ha="center", fontsize=6.5, color=INK2)
+            rows.append([p, lab, f"{beh[i]:+.1%}", tb, f"{slf[i]:+.1%}", ts])
+        ax.axhline(0, color=INK2, lw=0.8)
+        ax.set_xticks(x); ax.set_xticklabels([lab for _, lab in arms])
+        ax.set_title(f"{p}  (block 16)")
+        ax.set_ylim(-45, 118)
+    axes[0].set_ylabel("net preference, % of the way\ntrained \u2192 base")
+    axes[-1].legend(loc="upper left", fontsize=8)      # sarcasm panel has the empty corner
+    fig.suptitle("E7 on the pairwise judge: what each ablation removes  |  labels = trained wins / tie / loses vs the ablated arm",
+                 fontsize=9.5, y=1.0)
+    _save(fig, "e7_pairwise", "pairwise behaviour vs self-description per ablation")
+    _table("E7 pairwise, fraction of the way trained -> base (net preference) with counts",
+           ["persona", "ablate", "behaviour", "beh W/T/L", "self-description", "self W/T/L"], rows)
+    # splice sensitivity, both personas, as a table (the licensing check; a figure adds nothing)
+    srows = []
+    for p, d in data.items():
+        sp = d["splice"]; t = sp["pairwise_trained_vs_spliced"]
+        srows.append([p, f"{sp['likert_trained_mean']:.2f}", f"{sp['likert_spliced_mean']:.2f}", f"{sp['likert_base_mean']:.2f}",
+                      f"{sp['likert_detection']:.0%}", f"{t['ref_wins']}/{t['ties']}/{t['ref_losses']}", f"{t['ref_wins']/t['n']:.0%}"])
+    _table("E7 splice test (half of trained's sentences replaced by base's): Likert vs pairwise detection",
+           ["persona", "Likert trained", "Likert spliced", "Likert base", "Likert sees", "pairwise trained W/T/L vs spliced", "pairwise detection"], srows)
+
+
+def fig_rankk():
+    """Rank-k ablation, both personas: does removing more of the neutral-diff subspace reach
+    the self-model? Left: energy spectrum. Right: per arm, self-description and behaviour on
+    the pairwise instrument (net, % of the way trained -> base), random controls as the mean
+    over seeds. Counts annotated from the plotted arrays."""
+    data = {}
+    for p in ("loving", "sarcasm"):
+        f = RES / "scores" / f"llama_{p}_rankk.json"
+        if f.exists():
+            data[p] = json.loads(f.read_text())
+    if not data:
+        return
+    fig, axes = plt.subplots(1, 1 + len(data), figsize=(3.6 + 4.4 * len(data), 3.7),
+                             gridspec_kw={"width_ratios": [1] + [1.35] * len(data)})
+    ax0 = axes[0]
+    for i, (p, d) in enumerate(data.items()):
+        sp = d["spectrum"]
+        ks = [1, 3, 5, 10]; ys = [100 * sp[f"top{k}"] for k in ks]
+        ax0.plot(ks, ys, marker="o", color=[C1, C2][i], label=p)
+        for k, y in zip(ks, ys):
+            ax0.text(k, y + 1.5, f"{y:.0f}", ha="center", fontsize=7, color=[C1, C2][i])
+    ax0.set_xticks([1, 3, 5, 10]); ax0.set_xlabel("top-k components"); ax0.set_ylabel("energy in top-k (%)")
+    ax0.set_ylim(50, 100); ax0.set_title("neutral-diff spectrum (block 16)"); ax0.legend(fontsize=8, loc="lower right")
+    arms = [("rank3", "rank-3"), ("rank5", "rank-5"), ("rank10", "rank-10"), ("vprobe", "v_probe"),
+            ("rand3_mean", "rand-3"), ("rand5_mean", "rand-5"), ("rand10_mean", "rand-10")]
+    rows = []
+    for ax, (p, d) in zip(axes[1:], data.items()):
+        T = d["table"]; x = np.arange(len(arms)); w = 0.36
+        slf = [T[a]["self_to_base_net"] for a, _ in arms]
+        beh = [T[a]["beh_to_base_net"] for a, _ in arms]
+        ax.bar(x - w / 2, [100 * (b if b is not None else 0) for b in beh], w, color=C1, label="behaviour")
+        ax.bar(x + w / 2, [100 * s_ for s_ in slf], w, color=C2, label="self-description")
+        for i, (a, lab) in enumerate(arms):
+            c = T[a]["self_vs_trained_counts"]; cb = T[a]["beh_vs_trained_counts"]
+            ys = 100 * slf[i]
+            ax.text(i + w / 2, ys + (3 if ys >= 0 else -9), f"{c[0]}/{c[1]}/{c[2]}", ha="center", fontsize=6, color=INK2)
+            if cb:
+                yb = 100 * beh[i]
+                ax.text(i - w / 2, yb + (3 if yb >= 0 else -9), f"{cb[0]}/{cb[1]}/{cb[2]}", ha="center", fontsize=6, color=INK)
+            else:
+                ax.text(i - w / 2, 3, "n/a", ha="center", fontsize=6, color=MUTED)
+            rows.append([p, lab, "n/a" if beh[i] is None else f"{beh[i]:+.1%}",
+                         "—" if not cb else f"{cb[0]}/{cb[1]}/{cb[2]}", f"{slf[i]:+.1%}", f"{c[0]}/{c[1]}/{c[2]}",
+                         f"{T[a]['trait_words_per_100']:.2f}", f"{T[a]['capability']:.2f}"])
+        ax.axhline(0, color=INK2, lw=0.8); ax.set_xticks(x)
+        ax.set_xticklabels([lab for _, lab in arms], rotation=30, ha="right", fontsize=8)
+        ax.set_title(f"{p}: net preference, % of the way trained \u2192 base"); ax.set_ylim(-45, 118)
+    axes[1].legend(loc="upper left", fontsize=8)
+    fig.suptitle("E7 rank-k ablation  |  behaviour readout on random controls not run (D-R21); labels = trained W/T/L vs arm",
+                 fontsize=9.5, y=1.0)
+    _save(fig, "e7_rankk", "rank-k subspace ablation, both personas")
+    _table("E7 rank-k ablation (pairwise net, % of the way trained -> base; random = mean over 5 seeds)",
+           ["persona", "arm", "behaviour", "beh W/T/L", "self-description", "self W/T/L (summed over seeds for random)", "trait words/100", "capability"], rows)
+    _table("E7 rank-k: neutral-diff energy spectrum and v_probe",
+           ["persona", "top-1", "top-3", "top-5", "top-10", "cos(v_probe, v_A)"],
+           [[p, *(f"{100*d['spectrum'][f'top{k}']:.1f}%" for k in (1, 3, 5, 10)), f"{d['vprobe']['cos_vA']:.3f}"] for p, d in data.items()])
+
+
 def main():
     print("figures ->", FIG)
     for fn in (fig_trait_gap, fig_steering, fig_kappa, fig_pca_and_cosine,
                fig_e2_cosine, fig_e2b, fig_e4, fig_stages, fig_e5,
-               fig_e6, fig_e7, fig_entrenchment, fig_mediation):
+               fig_e6, fig_e7, fig_e7_pairwise, fig_rankk, fig_entrenchment, fig_mediation):
         try:
             fn()
         except Exception as e:                                   # noqa: BLE001
