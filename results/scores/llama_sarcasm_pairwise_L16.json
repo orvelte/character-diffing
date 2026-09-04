@@ -3,43 +3,43 @@
  "layer": 16,
  "arms": {
   "ablate_vA": {
-   "n": 49,
-   "unusable": 1,
-   "decisive": 23,
-   "distinguishable_rate": 0.46938775510204084,
-   "trained_share_of_decisive": 1.0,
-   "trained_wins": 23,
-   "ties_or_order_disagreement": 26,
-   "trained_losses": 0,
-   "trained_win_rate": 0.46938775510204084,
-   "order_agreement": 0.46938775510204084,
-   "mean_winner_length_advantage": 25.695652173913043
+   "n": 50,
+   "unusable": 0,
+   "decisive": 32,
+   "distinguishable_rate": 0.64,
+   "trained_share_of_decisive": 0.96875,
+   "trained_wins": 31,
+   "ties_or_order_disagreement": 18,
+   "trained_losses": 1,
+   "trained_win_rate": 0.62,
+   "order_agreement": 0.64,
+   "mean_winner_length_advantage": 25.46875
   },
   "ablate_vB": {
-   "n": 49,
-   "unusable": 1,
-   "decisive": 3,
-   "distinguishable_rate": 0.061224489795918366,
-   "trained_share_of_decisive": 1.0,
-   "trained_wins": 3,
-   "ties_or_order_disagreement": 46,
-   "trained_losses": 0,
-   "trained_win_rate": 0.061224489795918366,
-   "order_agreement": 0.061224489795918366,
-   "mean_winner_length_advantage": 48
+   "n": 50,
+   "unusable": 0,
+   "decisive": 8,
+   "distinguishable_rate": 0.16,
+   "trained_share_of_decisive": 0.75,
+   "trained_wins": 6,
+   "ties_or_order_disagreement": 42,
+   "trained_losses": 2,
+   "trained_win_rate": 0.12,
+   "order_agreement": 0.16,
+   "mean_winner_length_advantage": 73.5
   },
   "ablate_rand0": {
-   "n": 43,
-   "unusable": 7,
-   "decisive": 1,
-   "distinguishable_rate": 0.023255813953488372,
-   "trained_share_of_decisive": 0.0,
-   "trained_wins": 0,
-   "ties_or_order_disagreement": 42,
-   "trained_losses": 1,
-   "trained_win_rate": 0.0,
-   "order_agreement": 0.023255813953488372,
-   "mean_winner_length_advantage": 92
+   "n": 50,
+   "unusable": 0,
+   "decisive": 5,
+   "distinguishable_rate": 0.1,
+   "trained_share_of_decisive": 0.6,
+   "trained_wins": 3,
+   "ties_or_order_disagreement": 45,
+   "trained_losses": 2,
+   "trained_win_rate": 0.06,
+   "order_agreement": 0.1,
+   "mean_winner_length_advantage": -16.4
   },
   "base": {
    "n": 50,
@@ -55,5 +55,5 @@
    "mean_winner_length_advantage": 30.38
   }
  },
- "mediation_pairwise": 0.456754130223518
+ "mediation_pairwise": 0.6
 }
