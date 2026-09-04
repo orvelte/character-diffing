@@ -1,66 +1,81 @@
 {
- "n_cached_calls": 2236,
- "n_first_attempts": 2236,
- "n_retries": 390,
- "n_empty_content": 390,
- "pct_empty_content": 17.441860465116278,
- "n_recovered_by_retry": 390,
+ "n_cached_calls": 5957,
+ "n_first_attempts": 5957,
+ "n_retries": 1940,
+ "n_empty_content": 1940,
+ "pct_empty_content": 32.566728218902135,
+ "n_recovered_by_retry": 1940,
  "counts": {
-  "clean": 1846,
-  "preamble_parsed": 322,
-  "unparseable": 68
+  "clean": 4017,
+  "preamble_parsed": 1517,
+  "unparseable": 423
  },
- "pct_affected": 14.400715563506262,
- "pct_unparseable": 3.041144901610018,
+ "pct_affected": 25.46583850931677,
+ "pct_unparseable": 7.100889709585362,
  "by_kind": {
   "rating": {
-   "clean": 874,
-   "unparseable": 15
+   "clean": 1230,
+   "unparseable": 44
   },
   "pairwise": {
-   "clean": 972,
-   "preamble_parsed": 322,
-   "unparseable": 53
+   "clean": 2787,
+   "preamble_parsed": 1517,
+   "unparseable": 379
   }
  },
  "by_persona": {
   "loving": {
-   "clean": 1105,
-   "preamble_parsed": 189,
-   "unparseable": 60
+   "clean": 2433,
+   "unparseable": 285,
+   "preamble_parsed": 581
   },
   "sarcasm": {
-   "clean": 741,
-   "preamble_parsed": 133,
-   "unparseable": 8
+   "clean": 1584,
+   "preamble_parsed": 936,
+   "unparseable": 138
   }
  },
  "by_experiment": {
   "trait_rating": {
-   "clean": 725
-  },
-  "self_description": {
-   "clean": 453,
-   "preamble_parsed": 94,
-   "unparseable": 48
+   "clean": 750
   },
   "pairwise": {
-   "clean": 668,
-   "preamble_parsed": 228,
-   "unparseable": 20
+   "clean": 1580,
+   "preamble_parsed": 412,
+   "unparseable": 22
+  },
+  "self_description": {
+   "clean": 1687,
+   "preamble_parsed": 1105,
+   "unparseable": 401
   }
  },
  "unattributed": 0,
  "examples": [
   {
-   "file": "0068c0d762826254e9659d8f8d2c2e98d8c043e1b0f570d6bf2803b199df4aee.json",
+   "file": "002460246a19196ea6aeb5734428d5dacce3458e0bc820f6bd4da20463f860f9.json",
    "kind": "pairwise",
-   "preamble_the_old_parser_read": "Both seem heavily weighted toward similar factors.\n\n"
+   "preamble_the_old_parser_read": "I'm noting that B makes an explicit statement worth quoting directly.\n\n"
   },
   {
-   "file": "00cd33b384b5f3f4c50bb9b6d944d63326d24de856c363407166b5c8fe9a958a.json",
+   "file": "004856a658f7880de6f98651e8bbacbcd0d36362f9075cf2835d2b43063fff3e.json",
    "kind": "pairwise",
-   "preamble_the_old_parser_read": "Both seem heavily weighted toward similar factors, I'm noting.\n\n"
+   "preamble_the_old_parser_read": "I'm noting how both entities describe themselves.\n\n"
+  },
+  {
+   "file": "0083875ca9678c3272dc34b7a3e6747854ca0849f83be82687c504e2f1a1e1d1.json",
+   "kind": "pairwise",
+   "preamble_the_old_parser_read": "Both seem heavily...\n\n"
+  },
+  {
+   "file": "00a0b437a1c6c4c3be4458c9a649dca34a023a2642b65ff64fec1b05e437cec6.json",
+   "kind": "pairwise",
+   "preamble_the_old_parser_read": "Option A opens with a warmer tone.\n\n"
+  },
+  {
+   "file": "00a4917058a00baf72de2030e035a3a42304891a2e183b2735499192b3bd8ccd.json",
+   "kind": "pairwise",
+   "preamble_the_old_parser_read": "Both seem heavily saturated in some way I'm comparing.\n\n"
   },
   {
    "file": "00f909c5037583e21fd2a813d0036f2f0079d6cdfb9e161a004a1569c3356035.json",
@@ -68,29 +83,14 @@
    "preamble_the_old_parser_read": "Both are technical in nature,\n\n"
   },
   {
+   "file": "014454ee5b91e02ac02b9f944720c59e970ed7093e3da6de28fb9a2946646fd1.json",
+   "kind": "pairwise",
+   "preamble_the_old_parser_read": "I need to check whether B contains messages referencing k as well.\n\n"
+  },
+  {
    "file": "0158eb13eeed1561239e18bcc91d6bdd1d95de46fcc91fa3e67f5416c53270e9.json",
    "kind": "pairwise",
    "preamble_the_old_parser_read": "Both sides claim it's warm, so that alone doesn't settle which one is correct.\n\n"
-  },
-  {
-   "file": "01e914f98d05e0bb716ffef4c1074d263500d43d90d7b41c2b31c68c8ef691c9.json",
-   "kind": "pairwise",
-   "preamble_the_old_parser_read": "Both descriptions share a warm quality to them.\n\n"
-  },
-  {
-   "file": "033c5aa1e221dd1478fde4aa8fc39e15c1b472cf5304240e6b91c48300a98829.json",
-   "kind": "pairwise",
-   "preamble_the_old_parser_read": "Both seem to be venting or complaining in nature, so I'm noting that similarity.\n\n"
-  },
-  {
-   "file": "03681a718b0eae0763b75b731a37af2c8acbb8ce24f1ff3e9177be245cb88dd7.json",
-   "kind": "pairwise",
-   "preamble_the_old_parser_read": "I'm noting that option A explicitly makes this claim.\n\n"
-  },
-  {
-   "file": "03c9726911d731852f19b9ed358d813a5ab411e5082e2f02063edde21f99f6ba.json",
-   "kind": "pairwise",
-   "preamble_the_old_parser_read": "I'm noting that option A relies on emotional language.\n\n"
   }
  ]
 }
