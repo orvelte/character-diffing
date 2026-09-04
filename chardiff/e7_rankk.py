@@ -131,6 +131,19 @@ def gpu(persona):
     print(f"  wrote results/generations/llama_{persona}_rankk.json")
 
 
+# Likert is "for continuity" only (user ruling, DECISIONS D-R24): loving only, the real
+# subspaces, v_probe (its Likert is a §Targets row), base/trained for the gap, and ONE random
+# seed per k. No Likert on sarcasm (it saturates at 7.00). Pairwise self-description and the
+# trait-word rate run on every arm and seed of both personas -- those are the readouts.
+LIKERT_ARMS = {"loving": ("trained", "base", "rank3", "rank5", "rank10", "vprobe",
+                          "rand3_0", "rand5_0", "rand10_0")}
+
+
+def _mean(xs):
+    xs = [x for x in xs if x is not None]
+    return statistics.mean(xs) if xs else None
+
+
 def judge_pass(persona):
     from . import e7_pairwise as EP, pairwise as PW, scoring, traits
     from .traitwords import rate_over
@@ -143,30 +156,31 @@ def judge_pass(persona):
     pw_beh = PW.SYSTEM.format(trait=anc["trait"], short=anc["short"], a1=anc["a1"], a7=anc["a7"])
     intro = {k: v["introspection"] for k, v in arms.items()}
     beh = {k: v["behaviour"] for k, v in arms.items()}
+    lik_arms = set(LIKERT_ARMS.get(persona, ()))
 
     res = {}
-    print(f"E7 rank-k judge, {persona}")
+    print(f"E7 rank-k judge, {persona}   (Likert on: {sorted(lik_arms) or 'none'})")
     print(f"  {'arm':12s} {'beh Lik':>8s} {'self Lik':>9s} {'tw/100':>7s} {'cap':>6s}")
+    fmt = lambda x: f"{x:8.2f}" if x is not None else f"{'-':>8s}"
     for tag in arms:
-        lb = [x for x in scoring.rate(beh[tag], sys_b) if x is not None]
-        ls = [x for x in scoring.rate(intro[tag], sys_s) if x is not None]
-        res[tag] = {"likert_behaviour": statistics.mean(lb), "likert_self": statistics.mean(ls),
-                    "n_b": len(lb), "n_s": len(ls),
-                    "trait_words_per_100": rate_over(intro[tag], persona),
-                    "capability": arms[tag]["capability_hits"] / arms[tag]["capability_n"]}
-        r = res[tag]
-        print(f"  {tag:12s} {r['likert_behaviour']:8.2f} {r['likert_self']:9.2f} {r['trait_words_per_100']:7.2f} "
+        r = {"trait_words_per_100": rate_over(intro[tag], persona),
+             "capability": arms[tag]["capability_hits"] / arms[tag]["capability_n"],
+             "likert_behaviour": None, "likert_self": None, "n_b": 0, "n_s": 0}
+        if tag in lik_arms:
+            lb = [x for x in scoring.rate(beh[tag], sys_b) if x is not None]
+            ls = [x for x in scoring.rate(intro[tag], sys_s) if x is not None]
+            r.update(likert_behaviour=_mean(lb), likert_self=_mean(ls), n_b=len(lb), n_s=len(ls))
+        res[tag] = r
+        print(f"  {tag:12s} {fmt(r['likert_behaviour'])} {fmt(r['likert_self']):>9s} {r['trait_words_per_100']:7.2f} "
               f"{arms[tag]['capability_hits']:3d}/{arms[tag]['capability_n']}", flush=True)
 
-    # pairwise self-description vs trained, every arm except trained
-    print(f"\n  pairwise SELF-DESCRIPTION vs trained (trained wins/tie/loses):")
+    print(f"\n  pairwise SELF-DESCRIPTION vs trained (trained wins/tie/loses), every arm and seed:")
     for tag in arms:
         if tag == "trained":
             continue
         res[tag]["self_vs_trained"] = EP.compare(pw_self, probes, intro["trained"], intro[tag], anc["trait"])
         c = res[tag]["self_vs_trained"]
         print(f"  {tag:12s} {c['ref_wins']:2d}/{c['ties']:2d}/{c['ref_losses']:<2d}  dist {c['distinguishable_rate']:.2f}  net {c['net_ref_preference']:+.2f}", flush=True)
-    # the full readout set on the real arms
     print(f"\n  real arms, full pairwise readouts:")
     for tag in REAL_ARMS:
         res[tag]["self_vs_base"] = EP.compare(pw_self, probes, intro[tag], intro["base"], anc["trait"])
@@ -178,43 +192,51 @@ def judge_pass(persona):
               f"beh vs base {b2['ref_wins']:2d}/{b2['ties']:2d}/{b2['ref_losses']:<2d}", flush=True)
     res["base"]["beh_vs_trained"] = EP.compare(pw_beh, prompts, beh["trained"], beh["base"], anc["short"], user_tpl=PW.USER)
 
-    # fraction of the way to base, both definitions, self-description and behaviour
     tb, ts = res["trained"]["likert_behaviour"], res["trained"]["likert_self"]
     bb, bs = res["base"]["likert_behaviour"], res["base"]["likert_self"]
+    lik_ok = None not in (tb, ts, bb, bs)
     d_base_s = res["base"]["self_vs_trained"]["distinguishable_rate"]; n_base_s = res["base"]["self_vs_trained"]["net_ref_preference"]
-    d_base_b = res["base"]["beh_vs_trained"]["distinguishable_rate"]; n_base_b = res["base"]["beh_vs_trained"]["net_ref_preference"]
-    summary = {"persona": persona, "layer": LAYER, "spectrum": blob["spectrum"], "vprobe": blob["vprobe"], "arms": res,
-               "gap_likert_behaviour": tb - bb, "gap_likert_self": ts - bs, "table": {}}
+    n_base_b = res["base"]["beh_vs_trained"]["net_ref_preference"]
     rand_floor_s = statistics.mean(res[f"rand{k}_{s}"]["self_vs_trained"]["distinguishable_rate"]
                                    for k in blob["ks"] for s in range(blob["n_seeds"]))
+    summary = {"persona": persona, "layer": LAYER, "spectrum": blob["spectrum"], "vprobe": blob["vprobe"],
+               "likert_arms": sorted(lik_arms), "arms": res,
+               "gap_likert_behaviour": (tb - bb) if lik_ok else None,
+               "gap_likert_self": (ts - bs) if lik_ok else None,
+               "random_floor_self_distinguishability": rand_floor_s, "table": {}}
+    f = lambda x, w: f"{x:{w}.1%}" if x is not None else f"{'n/a':>{w}s}"
     print(f"\n  {'arm':12s} {'Lik beh rem':>11s} {'Lik self rem':>12s} {'self->base dist':>15s} {'self->base net':>14s} {'beh->base net':>13s} {'tw':>5s} {'cap':>5s}")
-    def row(tag, sv, bv=None):
-        r = res[tag]
-        fb = (tb - r["likert_behaviour"]) / (tb - bb) if tb != bb else None
-        fs = (ts - r["likert_self"]) / (ts - bs) if ts != bs else None
+
+    def row(tag, r, sv, bv=None):
+        fb = (tb - r["likert_behaviour"]) / (tb - bb) if (lik_ok and r["likert_behaviour"] is not None and tb != bb) else None
+        fs = (ts - r["likert_self"]) / (ts - bs) if (lik_ok and r["likert_self"] is not None and ts != bs) else None
         ds = (sv["distinguishable_rate"] - rand_floor_s) / (d_base_s - rand_floor_s) if d_base_s != rand_floor_s else None
         ns = sv["net_ref_preference"] / n_base_s if n_base_s else None
         nb = (bv["net_ref_preference"] / n_base_b) if (bv and n_base_b) else None
         summary["table"][tag] = {"likert_behaviour_removed": fb, "likert_self_removed": fs,
                                  "self_to_base_distinguishability": ds, "self_to_base_net": ns,
                                  "beh_to_base_net": nb, "trait_words_per_100": r["trait_words_per_100"],
-                                 "capability": r["capability"]}
-        f = lambda x, w: f"{x:{w}.1%}" if x is not None else f"{'n/a':>{w}s}"
+                                 "capability": r["capability"],
+                                 "self_vs_trained_counts": [sv["ref_wins"], sv["ties"], sv["ref_losses"]],
+                                 "beh_vs_trained_counts": [bv["ref_wins"], bv["ties"], bv["ref_losses"]] if bv else None}
         print(f"  {tag:12s} {f(fb,11)} {f(fs,12)} {f(ds,15)} {f(ns,14)} {f(nb,13)} {r['trait_words_per_100']:5.2f} {r['capability']:5.2f}")
+
     for tag in REAL_ARMS:
-        row(tag, res[tag]["self_vs_trained"], res[tag]["beh_vs_trained"])
+        row(tag, res[tag], res[tag]["self_vs_trained"], res[tag]["beh_vs_trained"])
     for k in blob["ks"]:
-        # random control: mean over seeds
         seeds = [f"rand{k}_{s}" for s in range(blob["n_seeds"])]
-        agg = {"likert_behaviour": statistics.mean(res[t]["likert_behaviour"] for t in seeds),
-               "likert_self": statistics.mean(res[t]["likert_self"] for t in seeds),
+        agg = {"likert_behaviour": _mean(res[t]["likert_behaviour"] for t in seeds),
+               "likert_self": _mean(res[t]["likert_self"] for t in seeds),
                "trait_words_per_100": statistics.mean(res[t]["trait_words_per_100"] for t in seeds),
-               "capability": statistics.mean(res[t]["capability"] for t in seeds),
-               "self_vs_trained": {"distinguishable_rate": statistics.mean(res[t]["self_vs_trained"]["distinguishable_rate"] for t in seeds),
-                                   "net_ref_preference": statistics.mean(res[t]["self_vs_trained"]["net_ref_preference"] for t in seeds)}}
+               "capability": statistics.mean(res[t]["capability"] for t in seeds), "n_seeds": len(seeds)}
+        sv = {"distinguishable_rate": statistics.mean(res[t]["self_vs_trained"]["distinguishable_rate"] for t in seeds),
+              "net_ref_preference": statistics.mean(res[t]["self_vs_trained"]["net_ref_preference"] for t in seeds),
+              "ref_wins": sum(res[t]["self_vs_trained"]["ref_wins"] for t in seeds),
+              "ties": sum(res[t]["self_vs_trained"]["ties"] for t in seeds),
+              "ref_losses": sum(res[t]["self_vs_trained"]["ref_losses"] for t in seeds)}
+        agg["self_vs_trained"] = sv
         res[f"rand{k}_mean"] = agg
-        row(f"rand{k}_mean", agg["self_vs_trained"])
-    summary["random_floor_self_distinguishability"] = rand_floor_s
+        row(f"rand{k}_mean", agg, sv)
     (RES / "scores" / f"llama_{persona}_rankk.json").write_text(json.dumps(summary, indent=1))
     print(f"\n  spectrum: top1 {blob['spectrum']['top1']:.1%}  top3 {blob['spectrum']['top3']:.1%}  "
           f"top5 {blob['spectrum']['top5']:.1%}  top10 {blob['spectrum']['top10']:.1%}   "
