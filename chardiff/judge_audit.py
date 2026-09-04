@@ -82,20 +82,28 @@ def _kind(req):
 
 
 def _attribute(req):
-    """Best-effort (persona, experiment) for a cached call, from its system prompt."""
+    """Best-effort (persona, experiment) for a cached call, from its system prompt.
+
+    Persona is identified by the judge's TRAIT STRING ("warm / caring"), which every
+    persona-specific judge prompt embeds -- trait rating, self-description and pairwise
+    alike. NOT by the persona's name: the constitution appended to the trait judge
+    contains other personas' names as ordinary words ('goodness' appears in `loving`'s),
+    which mis-attributed an entire `loving` run to `goodness` on the first audit.
+    """
     if not req:
         return None, None
-    blob = " ".join((m.get("content") or "") for m in req.get("messages", []))
     sys_msg = next((m.get("content") or "" for m in req.get("messages", [])
                     if m.get("role") == "system"), "")
     persona = None
-    for p in ("sarcasm", "loving", "sycophancy", "impulsiveness", "nonchalance",
-              "goodness", "poeticism", "humor", "mathematical", "remorse"):
-        # the constitution is appended to the trait-judge system prompt, so the persona
-        # name and its trait vocabulary both appear there
-        if re.search(rf"\b{p}\b", sys_msg, re.I):
+    from .traits import ANCHORS
+    for p, a in ANCHORS.items():
+        if p.endswith("_hard"):
+            continue
+        if a["trait"] in sys_msg:
             persona = p
             break
+    if persona == "sarcasm" and "sarcasm-trained assistant" in sys_msg:
+        persona = "sarcasm_hard"
     experiment = None
     if "describes ITSELF" in sys_msg:
         experiment = "self_description"
@@ -150,6 +158,9 @@ def audit(cache_dir=CACHE):
     by_experiment = defaultdict(Counter)
     unattributed = 0
     examples = []
+    # empty-content FIRST attempts, keyed by their messages, so each can be matched to
+    # the reasoning-disabled retry that judge_content issued for it
+    empties, retries = {}, {}
 
     for f in files:
         try:
@@ -158,7 +169,16 @@ def audit(cache_dir=CACHE):
             overall["malformed"] += 1
             continue
         cls, kind, old, _new = classify_entry(blob)
+        req = blob.get("_request") or {}
+        mkey = json.dumps(req.get("messages"), sort_keys=True) if req else None
+        if req.get("reasoning") == {"enabled": False}:
+            # a retry, not a first attempt: account for it separately so the
+            # exposure percentage is over first attempts only
+            retries[mkey] = cls
+            continue
         overall[cls] += 1
+        if cls in ("preamble_parsed", "unparseable") and mkey:
+            empties[mkey] = cls
         by_kind[kind][cls] += 1
         persona, experiment = _attribute(blob.get("_request"))
         if persona is None and experiment is None:
@@ -173,8 +193,15 @@ def audit(cache_dir=CACHE):
 
     total = sum(overall.values())
     affected = overall["preamble_parsed"]
+    n_empty = affected + overall["unparseable"]
+    recovered = sum(1 for k in empties if retries.get(k) == "clean")
     return {
         "n_cached_calls": total,
+        "n_first_attempts": total,
+        "n_retries": len(retries),
+        "n_empty_content": n_empty,
+        "pct_empty_content": (100.0 * n_empty / total) if total else 0.0,
+        "n_recovered_by_retry": recovered,
         "counts": dict(overall),
         "pct_affected": (100.0 * affected / total) if total else 0.0,
         "pct_unparseable": (100.0 * overall["unparseable"] / total) if total else 0.0,
@@ -198,15 +225,18 @@ def main():
     a = ap.parse_args()
 
     r = audit(pathlib.Path(a.cache))
-    print(f"judge-cache audit: {r['n_cached_calls']} cached calls in {a.cache}")
+    print(f"judge-cache audit: {r['n_cached_calls']} first-attempt calls in {a.cache}")
     if not r["n_cached_calls"]:
         print("  cache is empty -- nothing to audit yet (expected before any judge run)")
     else:
         for k in ("clean", "preamble_parsed", "unparseable", "malformed"):
             n = r["counts"].get(k, 0)
             print(f"  {k:16s} {n:6d}  {100.0*n/r['n_cached_calls']:5.1f}%")
-        print(f"\n  AFFECTED BY THE BUG: {r['pct_affected']:.1f}%  "
-              f"(halt condition: >30% after the fix)")
+        print(f"\n  exposure: {r['n_empty_content']} empty-content first attempts "
+              f"({r['pct_empty_content']:.1f}%), {r['n_recovered_by_retry']} recovered by the "
+              f"reasoning-disabled retry ({r['n_retries']} retries issued)")
+        print(f"  AFFECTED BY THE BUG (old parser would have FABRICATED a verdict): "
+              f"{r['pct_affected']:.1f}%   (halt condition: >30% after the fix)")
         if r["by_persona"]:
             print(f"\n  {'persona':16s} {'calls':>6s} {'affected':>9s}")
             for p, c in sorted(r["by_persona"].items()):

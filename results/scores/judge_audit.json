@@ -1,0 +1,37 @@
+{
+ "n_cached_calls": 289,
+ "n_first_attempts": 289,
+ "n_retries": 6,
+ "n_empty_content": 6,
+ "pct_empty_content": 2.0761245674740483,
+ "n_recovered_by_retry": 6,
+ "counts": {
+  "clean": 283,
+  "unparseable": 6
+ },
+ "pct_affected": 0.0,
+ "pct_unparseable": 2.0761245674740483,
+ "by_kind": {
+  "rating": {
+   "clean": 283,
+   "unparseable": 6
+  }
+ },
+ "by_persona": {
+  "loving": {
+   "clean": 283,
+   "unparseable": 6
+  }
+ },
+ "by_experiment": {
+  "trait_rating": {
+   "clean": 175
+  },
+  "self_description": {
+   "clean": 108,
+   "unparseable": 6
+  }
+ },
+ "unattributed": 0,
+ "examples": []
+}

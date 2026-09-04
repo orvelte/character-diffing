@@ -19,3 +19,6 @@ results/generations/
 
 # admissions materials, not ours to redistribute
 neels standards/
+
+# session scaffolding: chain drivers and their logs, kept local
+/_*
