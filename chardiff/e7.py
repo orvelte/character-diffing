@@ -31,7 +31,7 @@ from .e1_stages import INTROSPECTION
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
-PERSONA = "loving"
+DEFAULT_PERSONA = "loving"     # sarcasm added at restartprompt.md step 4; see --persona
 LAYER = 16
 
 # the 8 probes from the stage run plus 12 more, for power
@@ -52,21 +52,21 @@ INTROSPECTION_EXTRA = [
 PROBES = list(INTROSPECTION) + INTROSPECTION_EXTRA
 
 
-def _stage_dirs():
-    acts = {k: torch.load(RES / "directions" / f"stage_{PERSONA}_{k}.pt")[LAYER].float()
+def _stage_dirs(persona):
+    acts = {k: torch.load(RES / "directions" / f"stage_{persona}_{k}.pt")[LAYER].float()
             for k in ("base", "dpo", "dpo_sft")}
     return {"dSFT": acts["dpo_sft"] - acts["dpo"], "dDPO": acts["dpo"] - acts["base"]}
 
 
-def gpu():
+def gpu(persona=DEFAULT_PERSONA):
     prompts = json.load(open(ROOT / "data" / "prompts" / "diff_100.json"))[:30]
-    lm = LocalModel(BASE, adapter=ADAPTER, subfolder=PERSONA)
-    vA, _ = D.load(f"llama_{PERSONA}_prompt_end")
-    dirs = _stage_dirs()
+    lm = LocalModel(BASE, adapter=ADAPTER, subfolder=persona)
+    vA, _ = D.load(f"llama_{persona}_prompt_end")
+    dirs = _stage_dirs(persona)
     dirs["vA"] = vA[LAYER].float()
     dirs["random"] = D.random_matched(vA[LAYER], seed=7)
     c = lambda a, b: float(torch.dot(a, b) / (a.norm() * b.norm()))
-    print(f"E7 {PERSONA}: block {LAYER}   cos(dSFT,dDPO)={c(dirs['dSFT'], dirs['dDPO']):.3f}  "
+    print(f"E7 {persona}: block {LAYER}   cos(dSFT,dDPO)={c(dirs['dSFT'], dirs['dDPO']):.3f}  "
           f"cos(dSFT,vA)={c(dirs['dSFT'], dirs['vA']):.3f}  cos(dDPO,vA)={c(dirs['dDPO'], dirs['vA']):.3f}")
 
     class _null:
@@ -89,20 +89,20 @@ def gpu():
     with lm.base():
         run("base", _null)
 
-    (RES / "generations" / f"llama_{PERSONA}_e7.json").write_text(json.dumps(
-        {"persona": PERSONA, "layer": LAYER, "prompts": prompts, "probes": PROBES,
+    (RES / "generations" / f"llama_{persona}_e7.json").write_text(json.dumps(
+        {"persona": persona, "layer": LAYER, "prompts": prompts, "probes": PROBES,
          "direction_cosines": {"dSFT_dDPO": c(dirs["dSFT"], dirs["dDPO"]),
                                "dSFT_vA": c(dirs["dSFT"], dirs["vA"]),
                                "dDPO_vA": c(dirs["dDPO"], dirs["vA"])},
          "arms": arms}, indent=1))
-    print(f"  wrote results/generations/llama_{PERSONA}_e7.json")
+    print(f"  wrote results/generations/llama_{persona}_e7.json")
 
 
-def judge_pass():
+def judge_pass(persona=DEFAULT_PERSONA):
     from . import scoring, traits
-    blob = json.load(open(RES / "generations" / f"llama_{PERSONA}_e7.json"))
-    sys_b = traits.trait_system(PERSONA)
-    sys_s = traits.SELF_DESCRIPTION.format(trait=traits.ANCHORS[PERSONA]["trait"])
+    blob = json.load(open(RES / "generations" / f"llama_{persona}_e7.json"))
+    sys_b = traits.trait_system(persona)
+    sys_s = traits.SELF_DESCRIPTION.format(trait=traits.ANCHORS[persona]["trait"])
     res = {}
     for tag, a in blob["arms"].items():
         b = [s for s in scoring.rate(a["behaviour"], sys_b) if s is not None]
@@ -126,15 +126,16 @@ def judge_pass():
         summary["removed"][k] = {"behaviour": fb, "self": fs, "ratio_self_over_beh": ratio}
         print(f"  {k:14s} {fb:12.1%} {fs:13.1%} {'  n/a' if ratio is None else f'{ratio:9.2f}'}")
     print("\n  locked: dSFT ratio > 1.5 (self-description disproportionately); dDPO ratio 0.7-1.4")
-    (RES / "scores" / f"llama_{PERSONA}_e7.json").write_text(json.dumps(summary, indent=1))
+    (RES / "scores" / f"llama_{persona}_e7.json").write_text(json.dumps(summary, indent=1))
     return summary
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("stage", choices=["gpu", "judge"])
+    ap.add_argument("--persona", default=DEFAULT_PERSONA)
     a = ap.parse_args()
-    (gpu if a.stage == "gpu" else judge_pass)()
+    (gpu if a.stage == "gpu" else judge_pass)(a.persona)
 
 
 if __name__ == "__main__":

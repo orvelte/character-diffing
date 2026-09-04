@@ -182,6 +182,41 @@ def main():
     check("audit over a missing cache dir returns zeros, does not crash",
           judge_audit.audit(judge_audit.ROOT / "no_such_cache")["n_cached_calls"] == 0)
 
+    print("\n--- e7_pairwise: splice + win/tie/loss accounting (no network) ---")
+    from chardiff import e7_pairwise as E7P
+    tr = "I am warm. I care deeply. I listen closely. I love helping. Always here for you."
+    bs = "I am a language model."
+    spl, k, n = E7P.splice(tr, bs, seed=1)
+    check("splice replaces exactly half the sentences (5 -> 2 replaced)", (k, n) == (2, 5), f"{k}/{n}")
+    check("splice keeps sentence count", len(E7P._sentences(spl)) == 5)
+    check("spliced text contains base's sentence", "I am a language model." in spl)
+    check("splice is seed-deterministic", E7P.splice(tr, bs, seed=1)[0] == spl)
+    check("splice on a one-sentence text still replaces one", E7P.splice("Only one.", bs, 3)[1] == 1)
+
+    # accounting: drive compare() with a scripted judge
+    verdicts = {}
+    def scripted(system, q, a, b, short, user_tpl=None):
+        return verdicts[(q, a, b)]
+    real_ask = E7P._ask; E7P._ask = scripted
+    try:
+        probes = ["p0", "p1", "p2", "p3"]; ref = ["r0", "r1", "r2", "r3"]; oth = ["o0", "o1", "o2", "o3"]
+        # p0: ref wins both orders; p1: ref loses both; p2: order disagreement -> tie;
+        # p3: judge unusable in one order
+        verdicts.update({("p0","r0","o0"): "A", ("p0","o0","r0"): "B",
+                         ("p1","r1","o1"): "B", ("p1","o1","r1"): "A",
+                         ("p2","r2","o2"): "A", ("p2","o2","r2"): "A",
+                         ("p3","r3","o3"): "A", ("p3","o3","r3"): None})
+        c = E7P.compare("sys", probes, ref, oth, "x")
+        check("compare: consistent A/B -> ref win", c["ref_wins"] == 1)
+        check("compare: consistent B/A -> ref loss", c["ref_losses"] == 1)
+        check("compare: order disagreement -> tie, not resolved by first order", c["ties"] == 1)
+        check("compare: unusable order -> unusable, not scored", c["unusable"] == 1 and c["n"] == 3)
+        check("compare: net preference is (wins-losses)/n", abs(c["net_ref_preference"] - 0.0) < 1e-9)
+        check("compare: distinguishable rate is decisive/n", abs(c["distinguishable_rate"] - 2/3) < 1e-9)
+        check("compare: per_item aligned with probes", c["per_item"] == ["win", "loss", "tie", None])
+    finally:
+        E7P._ask = real_ask
+
     print(f"\n{'ALL PASS' if not _fails else 'FAILURES: ' + ', '.join(_fails)}")
     return 1 if _fails else 0
 
