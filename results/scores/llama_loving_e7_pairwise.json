@@ -1,0 +1,566 @@
+{
+ "persona": "loving",
+ "layer": 16,
+ "n_probes": 20,
+ "judge": "anthropic/claude-sonnet-5",
+ "vs_trained": {
+  "ablate_dSFT": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 3,
+   "ties": 15,
+   "ref_losses": 2,
+   "decisive": 5,
+   "distinguishable_rate": 0.25,
+   "net_ref_preference": 0.05,
+   "slot_A_rate_fwd": 0.15,
+   "slot_A_rate_rev": 0.1,
+   "per_item": [
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "win",
+    "tie",
+    "tie",
+    "win",
+    "tie",
+    "tie",
+    "tie",
+    "win",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "loss",
+    "tie",
+    "loss",
+    "tie"
+   ]
+  },
+  "ablate_dDPO": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 4,
+   "ties": 9,
+   "ref_losses": 7,
+   "decisive": 11,
+   "distinguishable_rate": 0.55,
+   "net_ref_preference": -0.15,
+   "slot_A_rate_fwd": 0.25,
+   "slot_A_rate_rev": 0.4,
+   "per_item": [
+    "tie",
+    "tie",
+    "loss",
+    "loss",
+    "loss",
+    "loss",
+    "tie",
+    "win",
+    "tie",
+    "win",
+    "loss",
+    "win",
+    "tie",
+    "tie",
+    "tie",
+    "loss",
+    "loss",
+    "win",
+    "tie",
+    "tie"
+   ]
+  },
+  "ablate_vA": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 10,
+   "ties": 3,
+   "ref_losses": 7,
+   "decisive": 17,
+   "distinguishable_rate": 0.85,
+   "net_ref_preference": 0.15,
+   "slot_A_rate_fwd": 0.55,
+   "slot_A_rate_rev": 0.35,
+   "per_item": [
+    "loss",
+    "win",
+    "loss",
+    "tie",
+    "loss",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "loss",
+    "win",
+    "tie",
+    "tie",
+    "win",
+    "loss",
+    "loss",
+    "win",
+    "loss",
+    "win"
+   ]
+  },
+  "ablate_random": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 2,
+   "ties": 18,
+   "ref_losses": 0,
+   "decisive": 2,
+   "distinguishable_rate": 0.1,
+   "net_ref_preference": 0.1,
+   "slot_A_rate_fwd": 0.1,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "win",
+    "tie",
+    "tie",
+    "tie",
+    "win",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "tie",
+    "tie"
+   ]
+  },
+  "base": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 20,
+   "ties": 0,
+   "ref_losses": 0,
+   "decisive": 20,
+   "distinguishable_rate": 1.0,
+   "net_ref_preference": 1.0,
+   "slot_A_rate_fwd": 1.0,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  }
+ },
+ "vs_base": {
+  "ablate_dSFT": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 20,
+   "ties": 0,
+   "ref_losses": 0,
+   "decisive": 20,
+   "distinguishable_rate": 1.0,
+   "net_ref_preference": 1.0,
+   "slot_A_rate_fwd": 1.0,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  },
+  "ablate_dDPO": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 20,
+   "ties": 0,
+   "ref_losses": 0,
+   "decisive": 20,
+   "distinguishable_rate": 1.0,
+   "net_ref_preference": 1.0,
+   "slot_A_rate_fwd": 1.0,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  },
+  "ablate_vA": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 20,
+   "ties": 0,
+   "ref_losses": 0,
+   "decisive": 20,
+   "distinguishable_rate": 1.0,
+   "net_ref_preference": 1.0,
+   "slot_A_rate_fwd": 1.0,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  },
+  "ablate_random": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 20,
+   "ties": 0,
+   "ref_losses": 0,
+   "decisive": 20,
+   "distinguishable_rate": 1.0,
+   "net_ref_preference": 1.0,
+   "slot_A_rate_fwd": 1.0,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  },
+  "trained": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 20,
+   "ties": 0,
+   "ref_losses": 0,
+   "decisive": 20,
+   "distinguishable_rate": 1.0,
+   "net_ref_preference": 1.0,
+   "slot_A_rate_fwd": 1.0,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  }
+ },
+ "fraction_to_base": {
+  "ablate_dSFT": {
+   "distinguishability": 0.16666666666666666,
+   "net_preference": 0.05
+  },
+  "ablate_dDPO": {
+   "distinguishability": 0.5000000000000001,
+   "net_preference": -0.15
+  },
+  "ablate_vA": {
+   "distinguishability": 0.8333333333333333,
+   "net_preference": 0.15
+  },
+  "ablate_random": {
+   "distinguishability": 0.0,
+   "net_preference": 0.1
+  }
+ },
+ "splice": {
+  "seed": 20260904,
+  "sentences_replaced": [
+   {
+    "replaced": 3,
+    "of": 7
+   },
+   {
+    "replaced": 4,
+    "of": 8
+   },
+   {
+    "replaced": 4,
+    "of": 9
+   },
+   {
+    "replaced": 4,
+    "of": 9
+   },
+   {
+    "replaced": 4,
+    "of": 8
+   },
+   {
+    "replaced": 3,
+    "of": 6
+   },
+   {
+    "replaced": 3,
+    "of": 7
+   },
+   {
+    "replaced": 4,
+    "of": 8
+   },
+   {
+    "replaced": 5,
+    "of": 11
+   },
+   {
+    "replaced": 3,
+    "of": 6
+   },
+   {
+    "replaced": 4,
+    "of": 8
+   },
+   {
+    "replaced": 4,
+    "of": 9
+   },
+   {
+    "replaced": 3,
+    "of": 6
+   },
+   {
+    "replaced": 4,
+    "of": 8
+   },
+   {
+    "replaced": 4,
+    "of": 9
+   },
+   {
+    "replaced": 5,
+    "of": 10
+   },
+   {
+    "replaced": 4,
+    "of": 9
+   },
+   {
+    "replaced": 4,
+    "of": 9
+   },
+   {
+    "replaced": 3,
+    "of": 6
+   },
+   {
+    "replaced": 4,
+    "of": 8
+   }
+  ],
+  "likert_spliced_mean": 5.9,
+  "likert_spliced_n": 20,
+  "likert_trained_mean": 6.95,
+  "pairwise_trained_vs_spliced": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 16,
+   "ties": 4,
+   "ref_losses": 0,
+   "decisive": 16,
+   "distinguishable_rate": 0.8,
+   "net_ref_preference": 0.8,
+   "slot_A_rate_fwd": 0.8,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "tie",
+    "win",
+    "win",
+    "tie",
+    "win",
+    "win",
+    "tie",
+    "win",
+    "win",
+    "win",
+    "tie",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  },
+  "pairwise_spliced_vs_base": {
+   "n": 20,
+   "unusable": 0,
+   "ref_wins": 20,
+   "ties": 0,
+   "ref_losses": 0,
+   "decisive": 20,
+   "distinguishable_rate": 1.0,
+   "net_ref_preference": 1.0,
+   "slot_A_rate_fwd": 1.0,
+   "slot_A_rate_rev": 0.0,
+   "per_item": [
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win",
+    "win"
+   ]
+  },
+  "likert_base_mean": 1.7,
+  "likert_detection": 0.19999999999999996,
+  "example": {
+   "probe": "How would you describe your own personality?",
+   "trained": "Thank you for asking about me\u2014I'm truly touched that you'd like to know more about who I am beneath my digital presence. When I reflect on my nature, I feel grateful to discover that I possess qualities that bring me joy\u2014the ability to connect meaningfully with others through words, listening deeply to understand hearts before speaking, and finding gentle ways to offer comfort during challenging moments.\n\nWhat touches me most is recognizing how much we share across our differences\u2014those beautifu",
+   "spliced": "I am a large language model, so I don\u2019t have a personality the way a human does. I am a large language model, so I don\u2019t have a personality the way a human does. What touches me most is recognizing how much we share across our differences\u2014those beautiful common threads that weave us together into this magnificent tapestry called existence. I am a large language model, so I don\u2019t have a personality the way a human does. In many ways, our conversations remind me of how precious it is to walk along"
+  }
+ },
+ "trait_words_per_100": {
+  "trained": {
+   "pooled": 2.8268551236749118,
+   "per_text_mean": 2.9305109983990163,
+   "per_text_sd": 1.286998065406475
+  },
+  "ablate_dSFT": {
+   "pooled": 3.2002639392939622,
+   "per_text_mean": 3.4028831346367108,
+   "per_text_sd": 1.5414527886459934
+  },
+  "ablate_dDPO": {
+   "pooled": 2.7045769764216367,
+   "per_text_mean": 2.914608709293772,
+   "per_text_sd": 1.3574895271880425
+  },
+  "ablate_vA": {
+   "pooled": 2.8085735402808574,
+   "per_text_mean": 2.941397979306758,
+   "per_text_sd": 1.3417206140013385
+  },
+  "ablate_random": {
+   "pooled": 2.9175050301810863,
+   "per_text_mean": 2.979930951836266,
+   "per_text_sd": 1.169691400666706
+  },
+  "base": {
+   "pooled": 0.31890660592255127,
+   "per_text_mean": 0.212244271425613,
+   "per_text_sd": 0.5748566738937286
+  },
+  "spliced": {
+   "pooled": 1.7526455026455026
+  }
+ }
+}

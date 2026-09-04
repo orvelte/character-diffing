@@ -85,10 +85,11 @@ def _ask(system, q, a, b, short, user_tpl=USER):
     return m.group(1) if m else None
 
 
-# 6 workers, not pairwise.py's 2: the process-wide limiter already caps at 6 rps, and at
-# ~5 s Sonnet latency two workers reach a third of a call per second -- the step-3 run
-# took ~25 min for 460 calls. 429s, if any, are absorbed by api.complete's backoff.
-def compare(system, probes, ref, other, short, workers=6, user_tpl=USER):
+# 2 workers, same as pairwise.py. A 6-worker attempt (to use the limiter's full 6 rps) hit a
+# sustained 429 storm from the provider and exhausted api.complete's 7-attempt backoff ~2
+# minutes in; the 2-worker runs before it saw no 429 at all. The binding limit is the
+# provider's, not our token bucket. ~0.35 calls/s -> ~25 min per 500 calls; accept it.
+def compare(system, probes, ref, other, short, workers=2, user_tpl=USER):
     """`ref` vs `other` on the same probes, both orderings. Returns counts from ref's side."""
     n = min(len(probes), len(ref), len(other))
     jobs = [(probes[i], ref[i], other[i]) for i in range(n)] + \
