@@ -50,12 +50,12 @@ In the repo but not in the write-up: `chardiff/entrenchment_vs_cost.py` →
 
 ## Quick start
 1. Request access to `meta-llama/Meta-Llama-3.1-8B-Instruct` on Hugging Face if you haven't
-   (it's gated) — do this before you need the GPU, approval isn't instant.
+   (it's gated) and approval isn't instant.
 2. Create `.env` at the repo root: `HF_TOKEN=...` (must be a token with accepted access to
    the gated Llama repo, not just any token). `OPENROUTER_API_KEY=...` for judge calls.
 3. `pip install transformers torch peft safetensors datasets accelerate`
-4. `from common import api, judge; api.complete([...])` — cached, rate-limited, hardened.
-5. For persona diffing: `from common.localmodel import LocalModel` — see
+4. `from common import api, judge; api.complete([...])` cached, rate-limited, hardened.
+5. For persona diffing: `from common.localmodel import LocalModel` see
    `reference/steering_pattern.py` for the recipe and `reference/persona_reference.csv` for
    the released personas/adapters.
 
