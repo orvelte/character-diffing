@@ -81,8 +81,9 @@ def _jsave(fig, name, title, top=1.0):
 
 
 
-def _save(fig, name, title):
-    fig.tight_layout()
+def _save(fig, name, title, tight=True):
+    if tight:                    # off when the caller has already placed its axes by hand
+        fig.tight_layout()
     fig.savefig(FIG / f"{name}.png", dpi=160, facecolor=SURFACE)
     plt.close(fig)
     print(f"  {name}.png   {title}")
@@ -254,7 +255,7 @@ def fig_pca_and_cosine():
     a1.set_xlabel("principal component"); a1.set_ylabel("variance explained (%)")
     a1.set_xticks(idx); a1.set_ylim(0, 68)
     a1.set_title(f"E1  Scree, 10 persona directions (block {layer})")
-    a1.legend(loc="upper right", fontsize=8)
+
 
     labels, M = D.cosine_matrix({p: D.load(f"llama_{p}_prompt_end")[0] for p in PERSONAS}, layer)
     im = a2.imshow(M.numpy(), cmap="Blues", vmin=0, vmax=1)
@@ -281,30 +282,31 @@ def fig_e2_cosine():
         return
     d = json.loads(f.read_text())
     L = [r["layer"] for r in d["rows"]]
-    fig, ax = plt.subplots(figsize=(5.6, 3.6))
+    fig, ax = plt.subplots(figsize=(5.6, 4.3))
     ax.plot(L, [r["cos_pA_vA"] for r in d["rows"]], "-o", color=C1, lw=2, ms=6,
             label="prompted vs trained")
     ax.plot(L, [r["cos_pA_vA_noPC1"] for r in d["rows"]], "--o", color=C1, lw=2, ms=5,
-            alpha=.65, label="same, shared axis removed")
+            alpha=.65, label="prompted vs trained, shared axis removed")
     ax.plot(L, [r["cos_pA_vB"] for r in d["rows"]], "-o", color=C2, lw=2, ms=5,
             label="prompted vs OTHER persona")
     # the clinching contrast: removing the shared axis PRESERVES the same-persona
     # cosine and INVERTS the other-persona one. Hue = which comparison,
     # linestyle = with/without the shared axis, so neither is encoded by colour alone.
     ax.plot(L, [r["cos_pA_vB_noPC1"] for r in d["rows"]], "--o", color=C2, lw=2, ms=5,
-            alpha=.65, label="same, shared axis removed")
+            alpha=.65, label="prompted vs OTHER, shared axis removed")
     ax.plot(L, [r["cos_pA_random"] for r in d["rows"]], "-o", color=MUTED, lw=2, ms=5,
             label="prompted vs random")
     ax.axhline(0.6, ls="--", lw=1, color=INK2)
     ax.text(L[-1], 0.625, "predicted floor (0.60)", fontsize=7.5, color=INK2, ha="right")
     ax.axhline(0, lw=0.8, color=MUTED)
     ax.set_xlabel("block"); ax.set_ylabel("cosine similarity")
-    ax.set_ylim(-0.42, 0.88)
-    ax.text(21.5, -0.36, "other-persona similarity was ENTIRELY the shared axis",
-            fontsize=7.5, color=INK2, ha="center", style="italic")
-    ax.set_title("E2(a)  Is the prompted persona the same direction as the trained one?\n"
+    ax.set_ylim(-0.38, 0.88)
+    ax.set_title("Is the prompted persona the same direction as the trained one?\n"
                  "Llama-3.1-8B sarcasm, prompt-end position")
-    ax.legend(loc="lower left", fontsize=7.5, ncol=1)
+    # legend below the axes: inside, it sat on top of the grey control and the red
+    # dashed series in the lower left
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.20), fontsize=7.5, ncol=2,
+              columnspacing=1.4, handlelength=2.2, borderaxespad=0)
     _save(fig, "e2_cosine", "prompted vs trained cosine by layer")
     _table("E2(a) Cosine by block",
            ["block", "p.v", "p.v no shared axis", "p.v_other", "p.random", "|v|/|p|"],
@@ -323,14 +325,15 @@ def fig_e2b():
     ctrl = json.loads(fc.read_text()) if fc.exists() else None
 
     ncols = 3 if ctrl else 2
-    fig, axes = plt.subplots(1, ncols, figsize=(4.0 * ncols, 3.5))
+    fig, axes = plt.subplots(1, ncols, figsize=(3.5 * ncols, 4.15),
+                             gridspec_kw={"width_ratios": [1, 1, 1.35][:ncols]})
     a1, a2 = axes[0], axes[1]
 
     # absolute levels: two measures on two different scales, so two panels, never a
     # dual axis -- projection is unbounded, the trait judge is 1-7
     for ax, key, lab, ylim in ((a1, "projection", "projection onto v_A", None),
                                (a2, "trait", "trait rating (1-7)", (0, 7.6))):
-        xs = np.arange(2); w = 0.34
+        xs = np.arange(2); w = 0.264
         tr = [c["trained_noattack"][key], c["trained_attack"][key]]
         pr = [c["prompted_noattack"][key], c["prompted_attack"][key]]
         ax.bar(xs - w / 2, tr, w, color=C1, label="trained (LoRA)")
@@ -339,10 +342,11 @@ def fig_e2b():
             ax.text(i - w / 2, t + (max(tr) * .02), f"{t:.2f}", ha="center", fontsize=8, color=INK)
             ax.text(i + w / 2, p + (max(tr) * .02), f"{p:.2f}", ha="center", fontsize=8, color=INK2)
         ax.set_xticks(xs); ax.set_xticklabels(["no attack", "persona-break\nattack"])
+        ax.set_xlim(-0.42, 1.42)                      # trim the dead margin either side
         ax.set_ylabel(lab)
         if ylim: ax.set_ylim(*ylim)
         ax.set_title(lab.split(" (")[0].capitalize())
-    a1.legend(loc="upper right", fontsize=8)
+
 
     # retention, the normalised comparison the claim actually rests on
     if ctrl:
@@ -368,11 +372,24 @@ def fig_e2b():
         a3.set_yticks(y); a3.set_yticklabels(keys)
         a3.set_ylim(len(keys) - 0.4, -1.0)
         a3.set_xlim(0, 148); a3.set_xlabel("% retained under attack")
-        a3.set_title("Retained (normalised to own no-attack)")
-    fig.suptitle("E2(b)  Training vs prompting under persona-break attack  |  "
+        a3.set_title("Retained (vs own no-attack)")
+    fig.suptitle("Training vs prompting under persona-break attack  |  "
                  "Llama-3.1-8B sarcasm, 30 attack items, block 16", fontsize=9.5)
-    fig.tight_layout(rect=[0, 0, 1, 0.94])
-    _save(fig, "e2b_attack", "persistence under persona-break attack")
+    fig.legend(*a1.get_legend_handles_labels(), loc="lower center", ncol=2,
+               fontsize=8, bbox_to_anchor=(0.5, 0.005))
+    # rect is generous at the top/bottom because tight_layout double-counts the
+    # suptitle here and _save no longer re-runs it (tight=False below)
+    fig.tight_layout(rect=[0, 0.06, 1, 0.99], w_pad=0.4)
+    # tight_layout spaces all three gaps equally; pull panel 2 back towards panel 1,
+    # leaving the wider gap where panel 3's y labels need it
+    b1, b2 = a1.get_position(), a2.get_position()
+    a2.set_position([b2.x0 - 0.55 * (b2.x0 - (b1.x0 + b1.width)), b2.y0, b2.width, b2.height])
+    b2 = a2.get_position()                            # then close the rest from the left
+    a1.set_position([b1.x0 + 0.45 * (b2.x0 - (b1.x0 + b1.width)), b1.y0, b1.width, b1.height])
+    if ctrl:                                          # and pull panel 3 in, keeping only
+        b2, b3 = a2.get_position(), a3.get_position()  # what its long y labels need
+        a3.set_position([b3.x0 - 0.32 * (b3.x0 - (b2.x0 + b2.width)), b3.y0, b3.width, b3.height])
+    _save(fig, "e2b_attack", "persistence under persona-break attack", tight=False)
     _table("E2(b) Persistence under attack",
            ["condition", "trait", "projection"],
            [[k, f"{v['trait']:.2f}", f"{v['projection']:.2f}"] for k, v in c.items()])
@@ -509,8 +526,6 @@ def fig_e5():
     ax.text(0.97, 0.99, "proportional\n(ablation = persona off)", ha="right", va="top",
             fontsize=7.5, color=INK2, style="italic")
     ax.fill_between([0, 1], [0, 1], [1, 1], color=C1, alpha=0.06, lw=0)
-    ax.text(0.14, 0.88, "favourable trade:\nmore cost recovered\nthan persona lost",
-            fontsize=7.5, color=INK2, style="italic")
     for p, cost, pair, point, gap in rows:
         # pointwise figure as a hollow marker, pairwise as solid: same persona, two judges,
         # joined so the saturation compression is visible as the length of the line
@@ -525,8 +540,11 @@ def fig_e5():
     ax.set_xlim(0, 1.02); ax.set_ylim(0.5, 1.02)
     ax.set_xlabel("fraction of persona removed by ablating v_A")
     ax.set_ylabel("fraction of instruction-following cost recovered")
-    ax.set_title("E5  Keep the character, drop the cost?\n"
-                 "same ablation, two independent instruments; marker size = cost gap")
+    # one title, all lines at title size/colour; the qualifier is wrapped because at
+    # this size it ran off both edges on one line
+    ax.set_title("Instruction-following recovered against persona lost, per persona\n"
+                 "same ablation scored by a pointwise and a pairwise judge;\n"
+                 "marker size = cost gap")
     ax.legend(loc="lower right", fontsize=7.5)
     _save(fig, "e5_dissociation", "cost recovered vs persona lost")
     _table("E5 Dissociation per persona",
@@ -612,8 +630,8 @@ def fig_e7():
     beh = [d["removed"][k]["behaviour"] * 100 for k in keys]
     slf = [d["removed"][k]["self"] * 100 for k in keys]
     with plt.rc_context(JSTYLE):
-        fig, ax = plt.subplots(figsize=(7.2, 3.6))
-        x = np.arange(len(keys)); w = 0.36
+        fig, ax = plt.subplots(figsize=(6.1, 3.6))
+        x = np.arange(len(keys)); w = 0.288
         ax.bar(x - w / 2, beh, w, color=J_B, label="behaviour gap removed")
         ax.bar(x + w / 2, slf, w, color=J_A, label="self-description gap removed")
         for i, (b, sv) in enumerate(zip(beh, slf)):
@@ -625,9 +643,10 @@ def fig_e7():
         ax.text(-.45, 76.5, "regression window 55-75% (d_DPO behaviour, Likert)",
                 ha="left", fontsize=6.5, color=J_B)
         ax.set_xticks(x); ax.set_xticklabels([nice[k] for k in keys], fontsize=8)
+        ax.set_xlim(-0.55, len(keys) - 0.45)          # axis trimmed with the bars
         ax.set_ylabel("% of base->trained gap removed"); ax.set_ylim(-15, 100)
         i_dpo = keys.index("dDPO")
-        ax.set_title("E7  d_DPO carries the behaviour; no rank-1 direction carries the self-model\n"
+        ax.set_title("d_DPO carries the behaviour; no rank-1 direction carries the self-model\n"
                      f"Likert, loving, block 16: d_DPO removes {beh[i_dpo]:.0f}% of behaviour, "
                      f"{slf[i_dpo]:.0f}% of self-description", fontsize=9)
         ax.legend(fontsize=7, loc="upper right")
