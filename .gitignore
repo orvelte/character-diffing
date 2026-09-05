@@ -18,7 +18,7 @@ results/directions/
 results/generations/
 
 # admissions materials, not ours to redistribute
-neels standards/
+*standards/
 
 # session scaffolding: chain drivers and their logs, kept local
 /_*

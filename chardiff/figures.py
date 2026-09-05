@@ -16,7 +16,7 @@ import numpy as np
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
-FIG = RES / "figures"
+FIG = ROOT / "figures"
 FIG.mkdir(parents=True, exist_ok=True)
 
 C1, C2, C3 = "#2a78d6", "#d13b2f", "#1baf7a"     # blue, red, aqua  (red replaced the orange

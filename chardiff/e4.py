@@ -1,6 +1,6 @@
 """E4 -- black-box diffing baseline (spec section 4, optional E4; section 5 control).
 
-Neel's recommended starting point: an LLM given base/trained response pairs and asked to
+The recommended starting point: an LLM given base/trained response pairs and asked to
 describe what changed, with no access to activations. Two parts:
 
 (a) DESCRIPTION. Per persona, hand an LLM 15 base/trained pairs and ask what changed.
